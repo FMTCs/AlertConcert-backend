@@ -1,0 +1,26 @@
+#!/bin/bash
+
+# 이미 처리된 커밋이면 종료 (무한 루프 방지)
+git log -1 --pretty=%B | grep -q "Commit Author:" && exit 0
+
+HASH=$(git rev-parse --short HEAD)
+AUTHOR_NAME=$(git config user.name)
+AUTHOR_EMAIL=$(git config user.email)
+
+MSG=$(git log -1 --pretty=%B)
+
+# 제목 라인
+TITLE=$(echo "$MSG" | head -n 1)
+REST=$(echo "$MSG" | tail -n +2)
+
+# prefix 추출
+PREFIX=$(echo "$TITLE" | sed -E 's/^\[([^]]+)\].*/\1/')
+TITLE_BODY=$(echo "$TITLE" | sed -E 's/^\[[^]]+\][[:space:]]*//')
+
+NEW_MSG="[$PREFIX/$HASH] $TITLE_BODY
+$REST
+
+---
+Commit Author: $AUTHOR_NAME <$AUTHOR_EMAIL>"
+
+git commit --amend -m "$NEW_MSG" --no-edit >/dev/null 2>&1
