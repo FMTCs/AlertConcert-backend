@@ -1,0 +1,13 @@
+#!/bin/sh
+
+FILE=$1
+COMMIT_SOURCE=$2
+
+# merge, rebase 제외
+[ "$COMMIT_SOURCE" = "merge" ] && exit 0
+
+PREFIX=$(head -n1 "$FILE" | grep -o '^\[[A-Z]*\]')
+SHORT_HASH=$(git rev-parse --short HEAD 2>/dev/null || echo "INIT")
+
+sed -i.bak "1s/$PREFIX/$PREFIX\/$SHORT_HASH/" "$FILE"
+

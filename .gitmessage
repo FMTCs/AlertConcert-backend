@@ -1,14 +1,9 @@
-[FEAT] User Login
+[Prefix] Title
 # ↑ 제목 (50자 이내)
-
+# [FEAT], [BUGFIX], [REFACTOR], [CHORE], [DOCUMENT], [HOTFIX], [ETC] prefix 가 붙어 있어야함
 # ---------------------------
 # ↓ 본문 (필수)
-# Why:
-# - 왜 이 변경이 필요한가?
 
-# What:
-# - 무엇을 변경했는가?
-
-# Notes:
-# - 참고 사항, 이슈 번호
+# 간단한 설명
+# - authorizor : {WHO}
 
