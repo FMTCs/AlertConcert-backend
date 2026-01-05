@@ -2,6 +2,15 @@ plugins {
 	id 'java'
 	id 'org.springframework.boot' version '4.0.2-SNAPSHOT'
 	id 'io.spring.dependency-management' version '1.1.7'
+	id 'checkstyle'
+	id 'io.spring.javaformat' version '0.0.47'
+	id 'com.github.spotbugs' version '6.4.8'
+}
+
+checkstyle {
+	toolVersion = '9.3'
+	ignoreFailures = true  // 규칙 위반이 있어도 빌드는 성공시킴 (리포트만 생성)
+	maxWarnings = 0
 }
 
 group = 'com.fctm'

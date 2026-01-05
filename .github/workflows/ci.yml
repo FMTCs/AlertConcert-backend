@@ -1,0 +1,38 @@
+name: Java CI with Gradle
+
+on:
+  push:
+    branches: [ "main", "dev", "init" ]
+  pull_request:
+    branches: [ "main", "dev", "init" ]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          # gradlew 파일이 있는 위치를 지정합니다.
+          build-root-directory: release
+
+      # working-directory를 지정하여 release 폴더 안에서 명령어가 실행되게 합니다.
+      - name: Check Formatting
+        run: ./gradlew checkFormat
+        working-directory: release
+
+      - name: Run Check and Build
+        run: ./gradlew check build
+        working-directory: release
