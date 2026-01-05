@@ -1,0 +1,41 @@
+#!/bin/bash
+
+FILE="$1"
+CONTENT=$(cat "$FILE")
+
+TITLE=$(echo "$CONTENT" | head -n 1)
+BODY=$(sed '1d;/^#/d' "$FILE" | tr -d '[:space:]')
+
+PREFIX_REGEX="^\[(FEAT|BUGFIX|REFACTOR|CHORE|DOCUMENT|HOTFIX|ETC)\] .+"
+
+# 1. prefix 검사
+if [[ ! $TITLE =~ $PREFIX_REGEX ]]; then
+  echo "❌ 커밋 제목 prefix 오류"
+  exit 1
+fi
+
+# 2. 제목 길이
+if [ ${#TITLE} -gt 50 ]; then
+  echo "❌ 커밋 제목은 50자 이내"
+  exit 1
+fi
+
+# 3. 본문 필수
+if [[ -z "$(echo "$BODY" | tr -d '[:space:]')" ]]; then
+  echo "❌ 커밋 본문을 작성해야 합니다"
+  exit 1
+fi
+
+# Footer 추가 (중복 방지)
+grep -q "^Author:" "$FILE" && exit 0
+
+AUTHOR_NAME=$(git config user.name)
+AUTHOR_EMAIL=$(git config user.email)
+
+cat >> "$FILE" <<EOF
+
+---
+Author: $AUTHOR_NAME <$AUTHOR_EMAIL>
+EOF
+
+exit 0

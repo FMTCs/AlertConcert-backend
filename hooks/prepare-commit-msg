@@ -1,0 +1,24 @@
+#!/bin/sh
+
+FILE=$1
+COMMIT_SOURCE=$2
+
+# merge, squash, rebase 제외
+case "$COMMIT_SOURCE" in
+  merge|squash|commit) ;;
+  *) ;;
+esac
+
+# 이미 메시지가 있으면 절대 덮어쓰지 않음
+[ -s "$FILE" ] && exit 0
+
+cat <<EOF > "$FILE"
+[FEAT] Title
+# ↑ 제목 (50자 이내)
+# [FEAT], [BUGFIX], [REFACTOR], [CHORE], [DOCUMENT], [HOTFIX], [ETC]
+# ---------------------------
+# ↓ 본문 (필수)
+
+EOF
+
+exit 0
