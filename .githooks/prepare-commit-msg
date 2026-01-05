@@ -3,11 +3,22 @@
 FILE=$1
 COMMIT_SOURCE=$2
 
-# merge, rebase 제외
-[ "$COMMIT_SOURCE" = "merge" ] && exit 0
+# merge, squash, rebase 제외
+case "$COMMIT_SOURCE" in
+  merge|squash|commit) ;;
+  *) ;;
+esac
 
-PREFIX=$(head -n1 "$FILE" | grep -o '^\[[A-Z]*\]')
-SHORT_HASH=$(git rev-parse --short HEAD 2>/dev/null || echo "INIT")
+# 이미 내용이 있으면 건드리지 않음
+[ -s "$FILE" ] && exit 0
 
-sed -i.bak "1s/$PREFIX/$PREFIX\/$SHORT_HASH/" "$FILE"
+cat > "$FILE" <<EOF
+[FEAT] Title
+# ↑ 제목 (50자 이내)
+# [FEAT], [BUGFIX], [REFACTOR], [CHORE], [DOCUMENT], [HOTFIX], [ETC]
+# ---------------------------
+# ↓ 본문 (필수)
 
+EOF
+
+exit 0

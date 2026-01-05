@@ -6,7 +6,7 @@ CONTENT=$(cat "$FILE")
 TITLE=$(echo "$CONTENT" | head -n 1)
 BODY=$(echo "$CONTENT" | tail -n +3)
 
-PREFIX_REGEX="^\[(FEAT|BUGFIX|REFACTOR|CHORE|DOCUMENT|HOTFIX|ETC)\]"
+PREFIX_REGEX="^\[(FEAT|BUGFIX|REFACTOR|CHORE|DOCUMENT|HOTFIX|ETC)\] .+"
 
 # 1. prefix 검사
 if [[ ! $TITLE =~ $PREFIX_REGEX ]]; then
@@ -15,8 +15,8 @@ if [[ ! $TITLE =~ $PREFIX_REGEX ]]; then
 fi
 
 # 2. 제목 길이
-if [ ${#TITLE} -gt 72 ]; then
-  echo "❌ 커밋 제목은 72자 이내"
+if [ ${#TITLE} -gt 50 ]; then
+  echo "❌ 커밋 제목은 50자 이내"
   exit 1
 fi
 
