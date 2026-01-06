@@ -26,13 +26,13 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
         with:
           # gradlew 파일이 있는 위치를 지정합니다.
-          build-root-directory: release
+          build-root-directory: src
 
       # working-directory를 지정하여 release 폴더 안에서 명령어가 실행되게 합니다.
       - name: Check Formatting
         run: ./gradlew checkFormat
-        working-directory: release
+        working-directory: src
 
       - name: Run Check and Build
         run: ./gradlew check build
-        working-directory: release
+        working-directory: src

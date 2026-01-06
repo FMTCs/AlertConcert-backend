@@ -1,0 +1,27 @@
+name: Validate Commit Messages
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  commit-message-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check commit messages
+        run: |
+          COMMITS=$(git log origin/${{ github.event.pull_request.base.ref }}..HEAD --pretty=%s)
+
+          echo "$COMMITS" | while read -r msg; do
+            if [[ ! "$msg" =~ ^\[(FEAT|BUGFIX|REFACTOR|CHORE|DOCUMENT|HOTFIX|ETC)\]\ .+ ]]; then
+              echo "❌ Invalid commit message:"
+              echo "    $msg"
+              exit 1
+            fi
+          done
+
+          echo "✅ 모든 커밋 메시지 규칙 통과"

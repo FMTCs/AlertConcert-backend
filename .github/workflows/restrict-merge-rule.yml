@@ -1,0 +1,30 @@
+name: Restrict Merge Rules
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  check-branch-rules:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate PR merge direction
+        run: |
+          BASE="${{ github.event.pull_request.base.ref }}"
+          HEAD="${{ github.event.pull_request.head.ref }}"
+
+          echo "PR from $HEAD → $BASE"
+
+          # main에는 dev만 허용
+          if [[ "$BASE" == "main" && "$HEAD" != "dev" ]]; then
+            echo "❌ ERROR: main 브랜치에는 dev 브랜치만 merge 가능합니다."
+            exit 1
+          fi
+
+          # dev에는 main에서 오는 역방향 merge 금지
+          if [[ "$BASE" == "dev" && "$HEAD" == "main" ]]; then
+            echo "❌ ERROR: main → dev 역방향 merge는 허용되지 않습니다."
+            exit 1
+          fi
+
+          echo "✅ Merge 방향 규칙 통과"
