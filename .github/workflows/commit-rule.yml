@@ -14,7 +14,7 @@ jobs:
 
       - name: Check commit messages
         run: |
-          COMMITS=$(git log origin/${{ github.event.pull_request.base.ref }}..HEAD --pretty=%s)
+          COMMITS=$(git log origin/dev..HEAD --no-merges --pretty=%s)
 
           echo "$COMMITS" | while read -r msg; do
             if [[ ! "$msg" =~ ^\[(FEAT|BUGFIX|REFACTOR|CHORE|DOCUMENT|HOTFIX|ETC)\]\ .+ ]]; then
