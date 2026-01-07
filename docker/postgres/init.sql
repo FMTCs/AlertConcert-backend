@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS users (
   id VARCHAR(64) UNIQUE, -- TODO(정책): 가입 완료 후에만 필수
   pw_hash TEXT, -- TODO(정책): 가입 완료 후에만 필수 (bcrypt 해시 문자열)
 
-  spotify_user_id TEXT UNIQUE, -- TODO(정책): spotify 기반 서비스면 NOT NULL 권장
+  spotify_user_id TEXT UNIQUE NOT NULL,
 
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -32,7 +32,6 @@ CREATE TABLE IF NOT EXISTS users (
   valid BOOLEAN NOT NULL DEFAULT FALSE,
 
   -- refresh_token은 bcrypt로 저장하면 "복호화 불가"라 사용 불가
-  -- 대칭키 암호화(AES-GCM 등) 결과를 저장하는 용도 (base64면 TEXT, 바이너리면 BYTEA)
   spotify_refresh_token_enc TEXT -- TODO(형식): base64 문자열로 저장 가정. 바이너리면 BYTEA로 변경
 );
 
@@ -81,15 +80,13 @@ CREATE TABLE IF NOT EXISTS concerts (
   -- 장르 복수 선택
   genres TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
 
-  -- TODO(casts): 아직 데이터 구조 미정 -> JSONB로 임시 유지(향후 정규화 가능)
   casts JSONB,
 
-  -- TODO(예매시간): 현재는 "일" 단위만 저장. 시간 필요해지면 TIMESTAMPTZ로 변경
   booking_start_date DATE,
   booking_end_date DATE,
 
-  booking_url TEXT, -- TODO(검증): URL 형식 체크 필요 여부
-  poster_img_url TEXT, -- TODO(검증): URL 형식 체크 필요 여부
+  booking_url TEXT,
+  poster_img_url TEXT,
 
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
