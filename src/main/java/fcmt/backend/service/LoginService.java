@@ -4,15 +4,17 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class LoginService {
-    private final UserRepository userRepository;
 
-    public LoginService(UserRepository userRepository) {
-        this.userRepository = userRepository;
-    }
+	private final UserRepository userRepository;
 
-    public LoginResponseDto login(LoginRequestDto request) {
-        // ID/PW 검증부
+	public LoginService(UserRepository userRepository) {
+		this.userRepository = userRepository;
+	}
 
-        // JWT 토큰 생성부
-    }
+	public LoginResponseDto login(LoginRequestDto request) {
+		// ID/PW 검증부
+
+		// JWT 토큰 생성부
+	}
+
 }
