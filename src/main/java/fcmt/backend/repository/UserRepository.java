@@ -1,19 +1,13 @@
 package fcmt.backend.repository;
 
 import org.springframework.stereotype.Repository;
-
 import java.util.Optional;
 
-@Repository
-public class UserRepository {
+import fcmt.backend.entity.User;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-	public Optional<User> findByUsername(String username) {
-        if(username.equals("admin@test.com")) {
-            return Optional.of(
-                    new User(1L, "admin@test.com", "1234");
-            );
-        }
-        return Optional.empty();
-    }
+public interface UserRepository extends JpaRepository<User, Long> {
+
+	Optional<User> findByLongId(String id); // id를 기반으로 User table 탐색
 
 }

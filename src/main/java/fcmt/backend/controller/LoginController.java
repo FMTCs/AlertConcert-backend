@@ -1,6 +1,8 @@
 package fcmt.backend.controller;
 
 import fcmt.backend.service.LoginService;
+import fcmt.backend.dto.LoginRequestDto;
+import fcmt.backend.dto.LoginResponseDto;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -14,7 +16,7 @@ public class LoginController {
 	}
 
 	@PostMapping("/login")
-	public LoginResponseDto login(@RequestBody LoginRequestsDto request) {
+	public LoginResponseDto login(@RequestBody LoginRequestDto request) {
 		return loginService.login(request);
 	}
 
