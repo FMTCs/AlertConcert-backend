@@ -8,6 +8,7 @@ class ReleaseApplicationTests {
 
 	@Test
 	void contextLoads() {
+		int a;
 	}
 
 }
