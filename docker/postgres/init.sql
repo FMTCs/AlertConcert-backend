@@ -82,8 +82,8 @@ CREATE TABLE IF NOT EXISTS concerts (
 
   casts JSONB,
 
-  booking_start_date DATE,
-  booking_end_date DATE,
+  booking_start_date DATE, --TODO: kopis api확인 결과, 이 예매일과 관련한 정보가 없음. 예매 사이트(NOL)에도 확정으로 있는 정보가 아님.
+  booking_end_date DATE, --TODO: 이 두 정보를 지우고 공연일을 넣어야하나..? 싶기도 함 그래서
 
   booking_url TEXT,
   poster_img_url TEXT,
