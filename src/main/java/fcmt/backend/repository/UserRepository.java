@@ -8,6 +8,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface UserRepository extends JpaRepository<User, Long> {
 
-	Optional<User> findByLongId(String id); // id를 기반으로 User table 탐색
+	Optional<User> findById(String id); // id를 기반으로 User table 탐색
 
 }
