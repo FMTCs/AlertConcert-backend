@@ -82,8 +82,8 @@ CREATE TABLE IF NOT EXISTS concerts (
 
   casts JSONB,
 
-  booking_start_date DATE,
-  booking_end_date DATE,
+  performance_start_date DATE,
+  performance_end_date DATE,
 
   booking_url TEXT,
   poster_img_url TEXT,
@@ -91,8 +91,6 @@ CREATE TABLE IF NOT EXISTS concerts (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
 
-  CONSTRAINT chk_booking_date_range
-  CHECK (booking_start_date IS NULL OR booking_end_date IS NULL OR booking_end_date >= booking_start_date)
 );
 
 DROP TRIGGER IF EXISTS trg_concerts_updated_at ON concerts;
@@ -103,6 +101,4 @@ CREATE TRIGGER trg_concerts_updated_at
 
 -- 장르 포함 검색(예: WHERE genres @> ARRAY['rock']::text[])
 CREATE INDEX IF NOT EXISTS gin_concerts_genres ON concerts USING GIN (genres);
-CREATE INDEX IF NOT EXISTS idx_concerts_booking_dates ON concerts(booking_start_date, booking_end_date);
-
 COMMIT;
