@@ -30,4 +30,10 @@ public class AuthController {
 		return authService.refresh(accessToken);
 	}
 
+	@PostMapping("/logout")
+	public LogoutResponseDto logout(@RequestHeader("Authorization") String authHeader) {
+		String accessToken = authHeader.substring(7);
+		return authService.logout(accessToken);
+	}
+
 }

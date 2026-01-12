@@ -18,8 +18,6 @@ import fcmt.backend.repository.UserRepository;
 import fcmt.backend.exception.custom.UserNotFoundException;
 import fcmt.backend.exception.custom.InvalidPasswordException;
 
-import java.util.Objects;
-
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -71,7 +69,8 @@ public class AuthService {
 			// 임시 response 처리
 			return RegisterResponseDto.fail();
 		}
-		String spotifyUserId = "temp_" + request.getUsername();;
+		String spotifyUserId = "temp_" + request.getUsername();
+		;
 
 		// 4. User entity 생성
 		User user = User.builder()
@@ -109,6 +108,21 @@ public class AuthService {
 
 		// 6. accessToken 보내기
 		return new RefreshResponseDto(accessToken);
+	}
+
+	public LogoutResponseDto logout(String token) {
+		Claims claims = jwtTokenProvider.parseClaims(token);
+		sessionTokenRepository.delete(claims.get("uid", Long.class));
+
+		// [TODO] 논의점 : blackList로 accessToken을 제거하는게 좋을까?
+		// long expiration = claims.getExpiration().getTime() -
+		// System.currentTimeMillis();
+		// if (expiration > 0) {
+		// // key: token, value: "logout" 등의 형태로 Redis에 저장 -> Filter에 BlackList 검증 구조 추가
+		// sessionTokenRepository.saveBlacklist(token, "logout", expiration / 1000);
+		// }
+
+		return LogoutResponseDto.success();
 	}
 
 	private void validateDuplicateUsername(String username) {
