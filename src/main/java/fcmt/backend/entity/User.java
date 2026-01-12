@@ -3,8 +3,10 @@ package fcmt.backend.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-
-import java.time.OffsetDateTime;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import java.time.LocalDateTime;
 
 @Entity
 @Getter
@@ -12,16 +14,16 @@ import java.time.OffsetDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "Users", uniqueConstraints = { @UniqueConstraint(columnNames = "id"),
-		@UniqueConstraint(columnNames = "spotify_user_id") })
+@EntityListeners(AuditingEntityListener.class)
+@Table(name = "users")
 public class User {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long uid;
 
-	@Column(length = 64, unique = true)
-	private String id;
+	@Column(name = "username", length = 64, unique = true)
+	private String username;
 
 	@Column(name = "pw_hash", columnDefinition = "TEXT")
 	private String password;
@@ -29,21 +31,14 @@ public class User {
 	@Column(name = "spotify_user_id", nullable = false, unique = true)
 	private String spotifyUserId;
 
-	/**
-	 * 가입 생성 시각
-	 */
+	@CreatedDate // 생성 시 자동 저장
 	@Column(name = "created_at", nullable = false, updatable = false)
-	private OffsetDateTime createdAt;
+	private LocalDateTime createdAt;
 
-	/**
-	 * 수정 시각 (trigger로 관리)
-	 */
+	@LastModifiedDate
 	@Column(name = "updated_at", nullable = false)
-	private OffsetDateTime updatedAt;
+	private LocalDateTime updatedAt;
 
-	/**
-	 * 회원가입 완료 여부
-	 */
 	@Builder.Default
 	@Column(nullable = false)
 	private boolean valid = false;

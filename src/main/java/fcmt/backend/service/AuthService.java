@@ -1,12 +1,16 @@
 package fcmt.backend.service;
 
 import fcmt.backend.dto.*;
+import fcmt.backend.exception.custom.DuplicateUserException;
 import fcmt.backend.exception.custom.TokenInvalidException;
 import fcmt.backend.repository.SessionTokenRepository;
 import fcmt.backend.security.JwtTokenProvider;
 import fcmt.backend.security.SessionTokenConfig;
 import io.jsonwebtoken.Claims;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import fcmt.backend.entity.User;
@@ -14,6 +18,9 @@ import fcmt.backend.repository.UserRepository;
 import fcmt.backend.exception.custom.UserNotFoundException;
 import fcmt.backend.exception.custom.InvalidPasswordException;
 
+import java.util.Objects;
+
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -24,20 +31,19 @@ public class AuthService {
 
 	private final SessionTokenRepository sessionTokenRepository;
 
-	public User getUser(String id) {
-		return userRepository.findById(id).orElseThrow(UserNotFoundException::new);
-	}
+	private final PasswordEncoder passwordEncoder;
 
-	public boolean pwMatch(String pw1, String pw2) {
-		return pw1.equals(pw2);
+	public User getUser(String username) {
+		// [TODO] User 미 존재, Password 오류 둘다 동일하게 처리하기 => 보안 이슈 해결
+		return userRepository.findByUsername(username).orElseThrow(UserNotFoundException::new);
 	}
 
 	// Login Service 구현
 	public LoginResponseDto login(LoginRequestDto request) {
 		// 1. DB에서 사용자 정보 가져오기
-		User user = getUser(request.getId());
+		User user = getUser(request.getUsername());
 		// 2. ID/PW 검증부
-		if (!pwMatch(request.getPassword(), user.getPassword())) {
+		if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
 			throw new InvalidPasswordException();
 		}
 		// JWT 토큰 생성부
@@ -47,9 +53,36 @@ public class AuthService {
 		return new LoginResponseDto(accessToken);
 	}
 
+	@Transactional // 원자성 보장을 위해서 추가
 	public RegisterResponseDto register(RegisterRequestDto request) {
 
-		return new RegisterResponseDto();
+		// 1. username 중복 검사
+		validateDuplicateUsername(request.getUsername());
+
+		// 2. [TODO] 비밀번호 처리 -> 해싱을 어디서 하느냐? + 보안성 검사 + 비밀번호 확인
+		// 알던 gemini 왈 service 단에서 처리하는게 맞다고 해서 구현은 해두는 느낌으로 그럼 여기에서 비밀번호 확인이랑 보안성도 검사하는거
+		// 아닐까?
+		String encodedPassword = passwordEncoder.encode(request.getPassword());
+
+		// 3. [TODO] signupToken 가져오기 + spotifyUserId 검증부
+		String signupToken = request.getSignupToken();
+		if (!signupToken.equals("valid")) {
+			log.error("signupToken 오류 - 일단 pass");
+			// 임시 response 처리
+			return RegisterResponseDto.fail();
+		}
+		String spotifyUserId = "temp_" + request.getUsername();;
+
+		// 4. User entity 생성
+		User user = User.builder()
+			.username(request.getUsername())
+			.password(encodedPassword)
+			.spotifyUserId(spotifyUserId)
+			.build();
+
+		// 5. DB에 저장
+		userRepository.save(user);
+		return RegisterResponseDto.success();
 	}
 
 	public RefreshResponseDto refresh(String token) {
@@ -76,6 +109,12 @@ public class AuthService {
 
 		// 6. accessToken 보내기
 		return new RefreshResponseDto(accessToken);
+	}
+
+	private void validateDuplicateUsername(String username) {
+		if (userRepository.existsByUsername(username)) {
+			throw new DuplicateUserException();
+		}
 	}
 
 }
