@@ -2,41 +2,51 @@ package fcmt.backend.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.type.SqlTypes;
+
 import java.time.LocalDate;
-import org.hibernate.annotations.Type;
-import io.hypersistence.utils.hibernate.type.array.StringArrayType;
-import io.hypersistence.utils.hibernate.type.json.JsonBinaryType;
+import java.time.OffsetDateTime;
+import java.util.List;
+import java.util.Map;
 
 @Entity
-@Table(name = "concerts")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Table(name = "concerts")
 @Builder
 public class Concert {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Column(name = "concert_id")
 	private Long concertId;
 
-	@Column(nullable = false)
+	@Column(name = "concert_name", nullable = false)
 	private String concertName;
 
-	@Type(StringArrayType.class)
-	@Column(columnDefinition = "text[]")
-	private String[] genres;
+	@JdbcTypeCode(SqlTypes.ARRAY)
+	@Column(name = "genres", columnDefinition = "text[]", nullable = false)
+	private List<String> genres;
 
-	@Type(JsonBinaryType.class)
-	@Column(columnDefinition = "jsonb")
-	private String casts;
+	@JdbcTypeCode(SqlTypes.JSON)
+	@Column(name = "casts", columnDefinition = "jsonb")
+	private Map<String, Object> casts;
 
-	private LocalDate bookingStartDate;
+	@Column(name = "performance_start_date")
+	private LocalDate performanceStartDate;
 
-	private LocalDate bookingEndDate;
+	@Column(name = "performance_end_date")
+	private LocalDate performanceEndDate;
 
+	@Column(name = "booking_url")
 	private String bookingUrl;
 
+	@Column(name = "poster_img_url")
 	private String posterImgUrl;
 
 }

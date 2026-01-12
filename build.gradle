@@ -1,7 +1,6 @@
-//TODO: 버전 정보 이야기 필요. 이번 commit에서 이 파일에서 modify된 애들 보면 됨.
 plugins {
 	id 'java'
-	id 'org.springframework.boot' version '3.4.1'
+	id 'org.springframework.boot' version '4.0.1'
 	id 'io.spring.dependency-management' version '1.1.7'
 	id 'checkstyle'
 	id 'io.spring.javaformat' version '0.0.47'
@@ -37,12 +36,13 @@ repositories {
 
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-data-redis-reactive'
+	implementation 'org.springframework.boot:spring-boot-starter-restclient'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
-	implementation 'org.springframework.boot:spring-boot-starter-oauth2-authorization-server'
-	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
-	implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
-	implementation 'org.springframework.boot:spring-boot-starter-webflux'
-	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-security-oauth2-authorization-server'
+	implementation 'org.springframework.boot:spring-boot-starter-security-oauth2-client'
+	implementation 'org.springframework.boot:spring-boot-starter-security-oauth2-resource-server'
+	implementation 'org.springframework.boot:spring-boot-starter-webclient'
+	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	compileOnly 'org.projectlombok:lombok'
 	runtimeOnly 'org.postgresql:postgresql'
@@ -51,9 +51,10 @@ dependencies {
 	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
 	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
 	testImplementation 'org.springframework.boot:spring-boot-starter-data-redis-reactive-test'
-	testImplementation 'org.springframework.boot:spring-boot-starter-oauth2-authorization-server-test'
-	testImplementation 'org.springframework.boot:spring-boot-starter-oauth2-client-test'
-	testImplementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server-test'
+	testImplementation 'org.springframework.boot:spring-boot-starter-restclient-test'
+	testImplementation 'org.springframework.boot:spring-boot-starter-security-oauth2-authorization-server-test'
+	testImplementation 'org.springframework.boot:spring-boot-starter-security-oauth2-client-test'
+	testImplementation 'org.springframework.boot:spring-boot-starter-security-oauth2-resource-server-test'
 	testImplementation 'org.springframework.boot:spring-boot-starter-security-test'
 	testImplementation 'org.springframework.boot:spring-boot-starter-webclient-test'
 	testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
@@ -61,7 +62,6 @@ dependencies {
 	testCompileOnly 'org.projectlombok:lombok'
 	testAnnotationProcessor 'org.projectlombok:lombok'
 	implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-xml'
-	implementation 'io.hypersistence:hypersistence-utils-hibernate-63:3.8.3'
 }
 
 tasks.named('test') {

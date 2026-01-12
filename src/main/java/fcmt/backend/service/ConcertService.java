@@ -14,6 +14,8 @@ import org.springframework.web.client.RestTemplate;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Optional;
+import java.util.Map;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -60,7 +62,18 @@ public class ConcertService {
 
 		if (listResponse != null && listResponse.getConcertList() != null) {
 			for (KopisListResponse.KopisListDto listDto : listResponse.getConcertList()) {
-				fetchAndSaveDetail(listDto.getMt20id());
+				try {
+					fetchAndSaveDetail(listDto.getMt20id());
+					// 0.15초 대기 (1초에 최대 약 6~7번 요청하게 됨)
+					Thread.sleep(150);
+
+				} catch (InterruptedException e) {
+					log.error("작업 중 인터럽트 발생: {}", e.getMessage());
+					Thread.currentThread().interrupt(); // 상태 복구
+					break;
+				} catch (Exception e) {
+					log.error("상세 정보 저장 실패 (ID: {}): {}", listDto.getMt20id(), e.getMessage());
+				}
 			}
 		}
 	}
@@ -75,12 +88,15 @@ public class ConcertService {
 	}
 
 	private void saveOrUpdateConcert(KopisDetailResponse.KopisDetailDto dto) {
-		// 출연진(Cast) 정보 있으면 저장하고, 없으면 null로 저장
+		// Map으로 처리 - 출연진(Cast) 정보 있으면 저장하고, 없으면 null로 저장
 		String rawCast = dto.getPrfcast();
-		String castJson = null;
+		Map<String, Object> castMap = null;
 		if (rawCast != null && !rawCast.isBlank() && !rawCast.equals("-")) {
-			castJson = String.format("{\"rawCast\": \"%s\"}", rawCast);
+			castMap = Map.of("rawCast", rawCast);
 		}
+
+		// List로 처리 - Genre
+		List<String> genreList = List.of(dto.getGenrenm().split(", "));
 
 		// 공연명 기준으로 중복 체크
 		Optional<Concert> existingConcert = concertRepository.findByConcertName(dto.getPrfnm());
@@ -89,12 +105,12 @@ public class ConcertService {
 											// 좋을지도..? 좀 귀찮넹 일단 스킵
 			// 이미 있다면 정보 업데이트 (기존 ID 유지)
 			Concert concert = existingConcert.get();
-			concert.setGenres(dto.getGenrenm().split(", "));
+			concert.setGenres(genreList);
 			concert.setPosterImgUrl(dto.getPoster());
 			concert.setBookingUrl(dto.getRelates() != null ? dto.getRelates().getFirstUrl() : null);
 			// 만약 기존에 casts 정보가 없었는데 이번에 들어왔다면 업데이트
 			if (concert.getCasts() == null) {
-				concert.setCasts(castJson);
+				concert.setCasts(castMap);
 			}
 			concertRepository.save(concert);
 			log.info("업데이트 완료: {}", dto.getPrfnm());
@@ -103,12 +119,12 @@ public class ConcertService {
 			// 새로 생성
 			Concert newConcert = Concert.builder()
 				.concertName(dto.getPrfnm())
-				.genres(dto.getGenrenm().split(", "))
+				.genres(genreList)
 				.posterImgUrl(dto.getPoster())
-				.bookingStartDate(LocalDate.parse(dto.getPrfpdfrom().replace(".", "-")))
-				.bookingEndDate(LocalDate.parse(dto.getPrfpdto().replace(".", "-")))
+				.performanceStartDate(LocalDate.parse(dto.getPrfpdfrom().replace(".", "-")))
+				.performanceEndDate(LocalDate.parse(dto.getPrfpdto().replace(".", "-")))
 				.bookingUrl(dto.getRelates() != null ? dto.getRelates().getFirstUrl() : null)
-				.casts(castJson)
+				.casts(castMap)
 				.build();
 			concertRepository.save(newConcert);
 			log.info("신규 저장 완료: {}", dto.getPrfnm());

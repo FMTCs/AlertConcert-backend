@@ -25,10 +25,17 @@ public class SecurityConfig {
 	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 		http.csrf(csrf -> csrf.disable())
 			.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-			.authorizeHttpRequests(auth -> auth.requestMatchers("/api/login", "/api/register", "/api/login", "/api/test/**")// TODO: 테스트를 위해 /test/**경로 추가했음 삭제 필요.
-				.permitAll()
-				.anyRequest()
-				.authenticated())
+			.authorizeHttpRequests(
+					auth -> auth.requestMatchers("/api/login", "/api/register", "/api/login", "/api/test/**")// TODO:
+																												// 테스트를
+																												// 위해
+																												// /test/**경로
+																												// 추가했음
+																												// 삭제
+																												// 필요.
+						.permitAll()
+						.anyRequest()
+						.authenticated())
 			.addFilterBefore(jwtAuthFilter(), UsernamePasswordAuthenticationFilter.class);
 		return http.build();
 	}
