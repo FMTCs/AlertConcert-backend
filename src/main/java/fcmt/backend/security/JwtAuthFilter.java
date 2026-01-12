@@ -9,7 +9,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
@@ -43,7 +42,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 			// ACCESS 토큰만 허용
 			if (jwtTokenProvider.isAccessToken(claims)) {
 				String userId = claims.getSubject(); // 로그인 ID
-				Long uid = claims.get("uid", Long.class);
+				// Long uid = claims.get("uid", Long.class);
 
 				UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userId,
 						null, List.of() // 권한은 나중에 cnrk - Role 등등
