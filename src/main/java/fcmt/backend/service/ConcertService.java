@@ -26,7 +26,8 @@ public class ConcertService {
 
 	private final RestTemplate restTemplate = new RestTemplate();
 
-	@Value("${kopis.api.key}") // TODO: 지금은 application.properties에 저장하긴 했는데.. 이거 어떻게 관리?
+	@Value("c07ac9b2024f43feb0c58dddcc776b07") // TODO: 지금은 application.properties에 저장하긴
+												// 했는데.. 이거 어떻게 관리?
 	private String serviceKey;
 
 	@Scheduled(cron = "0 0 4 * * *") // 매일 새벽 4시에 실행 (초 분 시 일 월 요일)
@@ -90,47 +91,50 @@ public class ConcertService {
 	}
 
 	private void saveOrUpdateConcert(KopisDetailResponse.KopisDetailDto dto) {
-		// Map으로 처리 - 출연진(Cast) 정보 있으면 저장하고, 없으면 null로 저장
-		String rawCast = dto.getPrfcast();
-		Map<String, Object> castMap = null;
-		if (rawCast != null && !rawCast.isBlank() && !rawCast.equals("-")) {
-			castMap = Map.of("rawCast", rawCast);
-		}
-
-		// List로 처리 - Genre
-		List<String> genreList = List.of(dto.getGenrenm().split(", "));
-
-		// 공연명 기준으로 중복 체크
-		Optional<Concert> existingConcert = concertRepository.findByConcertName(dto.getPrfnm());
-
-		if (existingConcert.isPresent()) { // TODO: updatedate 최종수정일 이용해서 업데이트 여부 결정하는 게 더
-											// 좋을지도..? 좀 귀찮넹 일단 스킵
-			// 이미 있다면 정보 업데이트 (기존 ID 유지)
-			Concert concert = existingConcert.get();
-			concert.setGenres(genreList);
-			concert.setPosterImgUrl(dto.getPoster());
-			concert.setBookingUrl(dto.getRelates() != null ? dto.getRelates().getFirstUrl() : null);
-			// 만약 기존에 casts 정보가 없었는데 이번에 들어왔다면 업데이트
-			if (concert.getCasts() == null) {
-				concert.setCasts(castMap);
-			}
-			concertRepository.save(concert);
-			log.info("업데이트 완료: {}", dto.getPrfnm());
-		}
-		else {
-			// 새로 생성
-			Concert newConcert = Concert.builder()
-				.concertName(dto.getPrfnm())
-				.genres(genreList)
-				.posterImgUrl(dto.getPoster())
-				.performanceStartDate(LocalDate.parse(dto.getPrfpdfrom().replace(".", "-")))
-				.performanceEndDate(LocalDate.parse(dto.getPrfpdto().replace(".", "-")))
-				.bookingUrl(dto.getRelates() != null ? dto.getRelates().getFirstUrl() : null)
-				.casts(castMap)
-				.build();
-			concertRepository.save(newConcert);
-			log.info("신규 저장 완료: {}", dto.getPrfnm());
-		}
+		// // Map으로 처리 - 출연진(Cast) 정보 있으면 저장하고, 없으면 null로 저장
+		// String rawCast = dto.getPrfcast();
+		// List<Map<String, Object>> castList = null;
+		// if (rawCast != null && !rawCast.isBlank() && !rawCast.equals("-")) {
+		// castList = Map.of("rawCast", rawCast);
+		// }
+		//
+		// // List로 처리 - Genre
+		// List<String> genreList = List.of(dto.getGenrenm().split(", "));
+		//
+		// // 공연명 기준으로 중복 체크
+		// Optional<Concert> existingConcert =
+		// concertRepository.findByConcertName(dto.getPrfnm());
+		//
+		// if (existingConcert.isPresent()) { // TODO: updatedate 최종수정일 이용해서 업데이트 여부 결정하는게
+		// 더
+		// // 좋을지도..? 좀 귀찮넹 일단 스킵
+		// // 이미 있다면 정보 업데이트 (기존 ID 유지)
+		// Concert concert = existingConcert.get();
+		// concert.setGenres(genreList);
+		// concert.setPosterImgUrl(dto.getPoster());
+		// concert.setBookingUrl(dto.getRelates() != null ? dto.getRelates().getFirstUrl()
+		// : null);
+		// // 만약 기존에 casts 정보가 없었는데 이번에 들어왔다면 업데이트
+		// if (concert.getCasts() == null) {
+		// concert.setCasts(castMap);
+		// }
+		// concertRepository.save(concert);
+		// log.info("업데이트 완료: {}", dto.getPrfnm());
+		// }
+		// else {
+		// // 새로 생성
+		// Concert newConcert = Concert.builder()
+		// .concertName(dto.getPrfnm())
+		// .genres(genreList)
+		// .posterImgUrl(dto.getPoster())
+		// .performanceStartDate(LocalDate.parse(dto.getPrfpdfrom().replace(".", "-")))
+		// .performanceEndDate(LocalDate.parse(dto.getPrfpdto().replace(".", "-")))
+		// .bookingUrl(dto.getRelates() != null ? dto.getRelates().getFirstUrl() : null)
+		// .casts(castMap)
+		// .build();
+		// concertRepository.save(newConcert);
+		// log.info("신규 저장 완료: {}", dto.getPrfnm());
+		// }
 	}
 
 }

@@ -35,12 +35,12 @@ public class Concert {
 
 	@JdbcTypeCode(SqlTypes.JSON)
 	@Column(name = "casts", columnDefinition = "jsonb")
-	private Map<String, Object> casts;
+	private List<Map<String, Object>> casts;
 
-	@Column(name = "performance_start_date")
+	@Column(name = "booking_start_date")
 	private LocalDate performanceStartDate;
 
-	@Column(name = "performance_end_date")
+	@Column(name = "booking_end_date")
 	private LocalDate performanceEndDate;
 
 	@Column(name = "booking_url")
