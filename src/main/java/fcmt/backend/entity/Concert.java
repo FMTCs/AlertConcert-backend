@@ -49,4 +49,12 @@ public class Concert {
 	@Column(name = "poster_img_url")
 	private String posterImgUrl;
 
+	@CreationTimestamp
+	@Column(name = "created_at", nullable = false, updatable = false)
+	private OffsetDateTime createdAt;
+
+	@UpdateTimestamp
+	@Column(name = "updated_at", nullable = false)
+	private OffsetDateTime updatedAt;
+
 }
