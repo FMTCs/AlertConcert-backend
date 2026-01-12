@@ -2,9 +2,7 @@ package fcmt.backend.security;
 
 import fcmt.backend.entity.User;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 
 import jakarta.annotation.PostConstruct;
@@ -52,17 +50,38 @@ public class JwtTokenProvider {
 		return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody();
 	}
 
+	public Claims parseClaimsAllowExpired(String token) {
+		try {
+			return parseClaims(token);
+		}
+		catch (ExpiredJwtException e) {
+			return e.getClaims();
+		}
+	}
+
 	// Access Token인지 검증
 	public boolean isAccessToken(Claims claims) {
 		return SessionTokenConfig.ACCESS.name().equals(claims.get("type", String.class));
 	}
 
-	public boolean validateToken(String token) {
+	public Claims validateAccessToken(String token) {
+		try {
+			return parseClaims(token);
+		}
+		catch (ExpiredJwtException e) {
+			throw new JwtException("ACCESS_TOKEN_EXPIRED");
+		}
+		catch (JwtException | IllegalArgumentException e) {
+			throw new JwtException("INVALID_ACCESS_TOKEN");
+		}
+	}
+
+	public boolean isValidateToken(String token) {
 		try {
 			parseClaims(token);
 			return true;
 		}
-		catch (Exception e) {
+		catch (JwtException | IllegalArgumentException e) {
 			return false;
 		}
 	}

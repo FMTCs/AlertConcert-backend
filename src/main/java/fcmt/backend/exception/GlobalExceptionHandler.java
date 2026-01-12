@@ -1,6 +1,7 @@
 package fcmt.backend.exception;
 
 import fcmt.backend.exception.custom.InvalidPasswordException;
+import fcmt.backend.exception.custom.TokenInvalidException;
 import fcmt.backend.exception.custom.UserNotFoundException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -20,6 +21,12 @@ public class GlobalExceptionHandler {
 	public ResponseEntity<ErrorResponse> handleInvalidPasswordException() {
 		return ResponseEntity.status(ErrorCode.INVALID_PASSWORD.getStatus())
 			.body(new ErrorResponse(ErrorCode.INVALID_PASSWORD.getCode(), ErrorCode.INVALID_PASSWORD.getMessage()));
+	}
+
+	@ExceptionHandler(TokenInvalidException.class)
+	public ResponseEntity<ErrorResponse> handleTokenInvalidException() {
+		return ResponseEntity.status(ErrorCode.TOKEN_INVALID.getStatus())
+			.body(new ErrorResponse(ErrorCode.TOKEN_INVALID.getCode(), ErrorCode.TOKEN_INVALID.getMessage()));
 	}
 
 	// 나머지 Exception handler

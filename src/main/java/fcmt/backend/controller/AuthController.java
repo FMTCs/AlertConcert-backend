@@ -1,14 +1,11 @@
 package fcmt.backend.controller;
 
+import fcmt.backend.dto.*;
 import fcmt.backend.service.AuthService;
-import fcmt.backend.dto.LoginRequestDto;
-import fcmt.backend.dto.LoginResponseDto;
-import fcmt.backend.dto.RegisterRequestDto;
-import fcmt.backend.dto.RegisterResponseDto;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/auth")
 public class AuthController {
 
 	private final AuthService authService;
@@ -25,6 +22,12 @@ public class AuthController {
 	@PostMapping("/login")
 	public LoginResponseDto login(@RequestBody LoginRequestDto request) {
 		return authService.login(request);
+	}
+
+	@PostMapping("/refresh")
+	public RefreshResponseDto refresh(@RequestHeader("Authorization") String authHeader) {
+		String accessToken = authHeader.substring(7);
+		return authService.refresh(accessToken);
 	}
 
 }

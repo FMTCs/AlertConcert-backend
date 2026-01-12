@@ -14,29 +14,19 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-	private final JwtTokenProvider jwtTokenProvider;
-
-	@Bean
-	public JwtAuthFilter jwtAuthFilter() {
-		return new JwtAuthFilter(jwtTokenProvider);
-	}
+	private final JwtAuthFilter jwtAuthFilter;
 
 	@Bean
 	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 		http.csrf(csrf -> csrf.disable())
+			// 서버가 세션을 저장하지 않는다 ( 정책 )
 			.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 			.authorizeHttpRequests(auth -> auth
-				.requestMatchers("/api/login", "/api/register", "/api/login", "/api/test/**", "/api/recommend")// TODO:
-				// 테스트를
-				// 위해
-				// /test/**경로
-				// 추가했음
-				// 삭제
-				// 필요.
+				.requestMatchers("/auth/login", "/auth/register", "/auth/logout", "/api/test/**", "/api/recommend")
 				.permitAll()
 				.anyRequest()
 				.authenticated())
-			.addFilterBefore(jwtAuthFilter(), UsernamePasswordAuthenticationFilter.class);
+			.addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 		return http.build();
 	}
 
