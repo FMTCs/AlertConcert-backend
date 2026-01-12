@@ -14,9 +14,11 @@ import java.util.Map;
 
 @Entity
 @Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "concerts")
+@Builder
 public class Concert {
 
 	@Id
@@ -35,11 +37,11 @@ public class Concert {
 	@Column(name = "casts", columnDefinition = "jsonb")
 	private Map<String, Object> casts;
 
-	@Column(name = "booking_start_date")
-	private LocalDate bookingStartDate;
+	@Column(name = "performance_start_date")
+	private LocalDate performanceStartDate;
 
-	@Column(name = "booking_end_date")
-	private LocalDate bookingEndDate;
+	@Column(name = "performance_end_date")
+	private LocalDate performanceEndDate;
 
 	@Column(name = "booking_url")
 	private String bookingUrl;

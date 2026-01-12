@@ -89,7 +89,7 @@ CREATE TABLE IF NOT EXISTS concerts (
   poster_img_url TEXT,
 
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 
 );
 
