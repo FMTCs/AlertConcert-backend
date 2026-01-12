@@ -67,11 +67,13 @@ public class ConcertService {
 					// 0.15초 대기 (1초에 최대 약 6~7번 요청하게 됨)
 					Thread.sleep(150);
 
-				} catch (InterruptedException e) {
+				}
+				catch (InterruptedException e) {
 					log.error("작업 중 인터럽트 발생: {}", e.getMessage());
 					Thread.currentThread().interrupt(); // 상태 복구
 					break;
-				} catch (Exception e) {
+				}
+				catch (Exception e) {
 					log.error("상세 정보 저장 실패 (ID: {}): {}", listDto.getMt20id(), e.getMessage());
 				}
 			}
