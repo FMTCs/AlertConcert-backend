@@ -1,4 +1,5 @@
 package fcmt.backend.repository;
+
 import fcmt.backend.entity.Concert;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -9,6 +10,9 @@ import java.util.List;
 
 @Repository
 public interface ConcertRepository extends JpaRepository<Concert, Long> {
-    @Query(value = "SELECT DISTINCT c.* FROM concerts c WHERE EXISTS (SELECT 1 FROM unnest(c.genres) g WHERE g = ANY(CAST(:preferredGenres AS text[])))", nativeQuery = true)
-    List<Concert> findByGenresIn(@Param("preferredGenres") String[] preferredGenres);
+
+	@Query(value = "SELECT DISTINCT c.* FROM concerts c WHERE EXISTS (SELECT 1 FROM unnest(c.genres) g WHERE g = ANY(CAST(:preferredGenres AS text[])))",
+			nativeQuery = true)
+	List<Concert> findByGenresIn(@Param("preferredGenres") String[] preferredGenres);
+
 }

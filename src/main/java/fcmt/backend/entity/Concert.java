@@ -19,39 +19,40 @@ import java.util.Map;
 @Table(name = "concerts")
 public class Concert {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "concert_id")
-    private Long concertId;
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Column(name = "concert_id")
+	private Long concertId;
 
-    @Column(name = "concert_name", nullable = false)
-    private String concertName;
+	@Column(name = "concert_name", nullable = false)
+	private String concertName;
 
-    @JdbcTypeCode(SqlTypes.ARRAY)
-    @Column(name = "genres", columnDefinition = "text[]", nullable = false)
-    private List<String> genres;
+	@JdbcTypeCode(SqlTypes.ARRAY)
+	@Column(name = "genres", columnDefinition = "text[]", nullable = false)
+	private List<String> genres;
 
-    @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "casts", columnDefinition = "jsonb")
-    private Map<String, Object> casts;
+	@JdbcTypeCode(SqlTypes.JSON)
+	@Column(name = "casts", columnDefinition = "jsonb")
+	private Map<String, Object> casts;
 
-    @Column(name = "booking_start_date")
-    private LocalDate bookingStartDate;
+	@Column(name = "booking_start_date")
+	private LocalDate bookingStartDate;
 
-    @Column(name = "booking_end_date")
-    private LocalDate bookingEndDate;
+	@Column(name = "booking_end_date")
+	private LocalDate bookingEndDate;
 
-    @Column(name = "booking_url")
-    private String bookingUrl;
+	@Column(name = "booking_url")
+	private String bookingUrl;
 
-    @Column(name = "poster_img_url")
-    private String posterImgUrl;
+	@Column(name = "poster_img_url")
+	private String posterImgUrl;
 
-    @CreationTimestamp
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private OffsetDateTime createdAt;
+	@CreationTimestamp
+	@Column(name = "created_at", nullable = false, updatable = false)
+	private OffsetDateTime createdAt;
 
-    @UpdateTimestamp
-    @Column(name = "updated_at", nullable = false)
-    private OffsetDateTime updatedAt;
+	@UpdateTimestamp
+	@Column(name = "updated_at", nullable = false)
+	private OffsetDateTime updatedAt;
+
 }

@@ -15,19 +15,20 @@ import java.util.Map;
 @Table(name = "user_preferences")
 public class UserPreference {
 
-    @Id
-    @Column(name = "uid")
-    private Long uid;
+	@Id
+	@Column(name = "uid")
+	private Long uid;
 
-    @MapsId
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "uid")
-    private User user;
+	@MapsId
+	@OneToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "uid")
+	private User user;
 
-    @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "preference", columnDefinition = "jsonb", nullable = false)
-    private Map<String, Object> preference;
+	@JdbcTypeCode(SqlTypes.JSON)
+	@Column(name = "preference", columnDefinition = "jsonb", nullable = false)
+	private Map<String, Object> preference;
 
-    @Column(name = "updated_at", nullable = false, insertable = false, updatable = false)
-    private OffsetDateTime updatedAt;
+	@Column(name = "updated_at", nullable = false, insertable = false, updatable = false)
+	private OffsetDateTime updatedAt;
+
 }
