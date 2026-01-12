@@ -1,0 +1,14 @@
+jwt:
+  secret: "THIS_IS_VERY_LONG_SECRET_KEY_AT_LEAST_32_BYTES_LONG" #[TODO] 임시 -> + .gitignore 필요
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/myapp
+    username: user
+    password: password
+    driver-class-name: org.postgresql.Driver
+
+    jpa:
+      hibernate:
+        ddl-auto: validate   # 처음엔 validate or update
+      show-sql: true
