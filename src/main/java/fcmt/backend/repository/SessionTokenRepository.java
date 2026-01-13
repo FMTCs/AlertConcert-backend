@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 @Repository
@@ -14,16 +15,16 @@ public class SessionTokenRepository {
 
 	private static final String PREFIX = "session_token";
 
-	public void save(long uid, String refreshToken, long ttlSecons) {
-		redisTemplate.opsForValue().set(PREFIX + uid, refreshToken, ttlSecons, TimeUnit.SECONDS);
+	public void save(long uid, String refreshToken, long ttlSeconds) {
+		redisTemplate.opsForValue().set(PREFIX + uid, refreshToken, ttlSeconds, TimeUnit.SECONDS);
 	}
 
-	public String find(String userId) {
-		return redisTemplate.opsForValue().get(PREFIX + userId);
+	public Optional<String> find(Long uid) {
+		return Optional.ofNullable(redisTemplate.opsForValue().get(PREFIX + uid));
 	}
 
-	public void delete(String userId) {
-		redisTemplate.delete(PREFIX + userId);
+	public void delete(Long uid) {
+		redisTemplate.delete(PREFIX + uid);
 	}
 
 }

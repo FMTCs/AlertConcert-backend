@@ -2,9 +2,7 @@ package fcmt.backend.security;
 
 import fcmt.backend.entity.User;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 
 import jakarta.annotation.PostConstruct;
@@ -38,7 +36,7 @@ public class JwtTokenProvider {
 	// token 생성 - 보안을 위해서 token 생성부 private으로
 	private String createToken(User user, SessionTokenConfig type) {
 		return Jwts.builder()
-			.setSubject(user.getId()) // 해당 부분에 대해서는 논의 필요 -> 어떤 값들이 들어가는지
+			.setSubject(user.getUsername()) // 해당 부분에 대해서는 논의 필요 -> 어떤 값들이 들어가는지
 			.claim("uid", user.getUid())
 			.claim("type", type.name())
 			.setIssuedAt(new Date())
@@ -52,17 +50,38 @@ public class JwtTokenProvider {
 		return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody();
 	}
 
+	public Claims parseClaimsAllowExpired(String token) {
+		try {
+			return parseClaims(token);
+		}
+		catch (ExpiredJwtException e) {
+			return e.getClaims();
+		}
+	}
+
 	// Access Token인지 검증
 	public boolean isAccessToken(Claims claims) {
 		return SessionTokenConfig.ACCESS.name().equals(claims.get("type", String.class));
 	}
 
-	public boolean validateToken(String token) {
+	public Claims validateAccessToken(String token) {
+		try {
+			return parseClaims(token);
+		}
+		catch (ExpiredJwtException e) {
+			throw new JwtException("ACCESS_TOKEN_EXPIRED");
+		}
+		catch (JwtException | IllegalArgumentException e) {
+			throw new JwtException("INVALID_ACCESS_TOKEN");
+		}
+	}
+
+	public boolean isValidateToken(String token) {
 		try {
 			parseClaims(token);
 			return true;
 		}
-		catch (Exception e) {
+		catch (JwtException | IllegalArgumentException e) {
 			return false;
 		}
 	}
