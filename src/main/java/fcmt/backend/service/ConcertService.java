@@ -27,7 +27,7 @@ public class ConcertService {
 	private final RestTemplate restTemplate = new RestTemplate();
 
 	@Value("${kopis.api.key}") // TODO: 지금은 application.properties에 저장하긴
-												// 했는데.. 이거 어떻게 관리?
+								// 했는데.. 이거 어떻게 관리?
 	private String serviceKey;
 
 	@Scheduled(cron = "0 0 4 * * *") // 매일 새벽 4시에 실행 (초 분 시 일 월 요일)
@@ -93,9 +93,9 @@ public class ConcertService {
 	private void saveOrUpdateConcert(KopisDetailResponse.KopisDetailDto dto) {
 		// // Map으로 처리 - 출연진(Cast) 정보 있으면 저장하고, 없으면 null로 저장
 		// String rawCast = dto.getPrfcast();
-		// List<Map<String, Object>> castList = null;
+		// Map<String, Object> castMap = null;
 		// if (rawCast != null && !rawCast.isBlank() && !rawCast.equals("-")) {
-		// castList = Map.of("rawCast", rawCast);
+		// castMap = Map.of("rawCast", rawCast);
 		// }
 		//
 		// // List로 처리 - Genre
@@ -105,8 +105,8 @@ public class ConcertService {
 		// Optional<Concert> existingConcert =
 		// concertRepository.findByConcertName(dto.getPrfnm());
 		//
-		// if (existingConcert.isPresent()) { // TODO: updatedate 최종수정일 이용해서 업데이트 여부 결정하는게
-		// 더
+		// if (existingConcert.isPresent()) { // TODO: updatedate 최종수정일 이용해서 업데이트 여부 결정하는
+		// 게 더
 		// // 좋을지도..? 좀 귀찮넹 일단 스킵
 		// // 이미 있다면 정보 업데이트 (기존 ID 유지)
 		// Concert concert = existingConcert.get();

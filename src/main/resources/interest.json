@@ -1,0 +1,721 @@
+{
+  "items": [
+    {
+      "external_urls": {
+        "spotify": "https://open.spotify.com/artist/2T5KKZuEEudb7alCJ1pCus"
+      },
+      "followers": {
+        "href": null,
+        "total": 172666
+      },
+      "genres": [
+        "K-발라드"
+      ],
+      "href": "https://api.spotify.com/v1/artists/2T5KKZuEEudb7alCJ1pCus",
+      "id": "2T5KKZuEEudb7alCJ1pCus",
+      "images": [
+        {
+          "height": 640,
+          "url": "https://i.scdn.co/image/ab6761610000e5eb341c85848c698e505bb967b4",
+          "width": 640
+        },
+        {
+          "height": 320,
+          "url": "https://i.scdn.co/image/ab67616100005174341c85848c698e505bb967b4",
+          "width": 320
+        },
+        {
+          "height": 160,
+          "url": "https://i.scdn.co/image/ab6761610000f178341c85848c698e505bb967b4",
+          "width": 160
+        }
+      ],
+      "name": "데이먼스 이어 Damons year",
+      "popularity": 55,
+      "type": "artist",
+      "uri": "spotify:artist:2T5KKZuEEudb7alCJ1pCus"
+    },
+    {
+      "external_urls": {
+        "spotify": "https://open.spotify.com/artist/5xHC23kCM6goKp7bDDXE3T"
+      },
+      "followers": {
+        "href": null,
+        "total": 28716
+      },
+      "genres": [
+        "한국 랩"
+      ],
+      "href": "https://api.spotify.com/v1/artists/5xHC23kCM6goKp7bDDXE3T",
+      "id": "5xHC23kCM6goKp7bDDXE3T",
+      "images": [
+        {
+          "height": 640,
+          "url": "https://i.scdn.co/image/ab6761610000e5eb2f238bef8b5af398974dfe58",
+          "width": 640
+        },
+        {
+          "height": 320,
+          "url": "https://i.scdn.co/image/ab676161000051742f238bef8b5af398974dfe58",
+          "width": 320
+        },
+        {
+          "height": 160,
+          "url": "https://i.scdn.co/image/ab6761610000f1782f238bef8b5af398974dfe58",
+          "width": 160
+        }
+      ],
+      "name": "비프리",
+      "popularity": 39,
+      "type": "artist",
+      "uri": "spotify:artist:5xHC23kCM6goKp7bDDXE3T"
+    },
+    {
+      "external_urls": {
+        "spotify": "https://open.spotify.com/artist/5rjahCZtY8h4y2EHCnpgtQ"
+      },
+      "followers": {
+        "href": null,
+        "total": 65702
+      },
+      "genres": [
+        "일본 인디"
+      ],
+      "href": "https://api.spotify.com/v1/artists/5rjahCZtY8h4y2EHCnpgtQ",
+      "id": "5rjahCZtY8h4y2EHCnpgtQ",
+      "images": [
+        {
+          "height": 640,
+          "url": "https://i.scdn.co/image/ab6761610000e5ebfa1b812f78bab1a7c110953b",
+          "width": 640
+        },
+        {
+          "height": 320,
+          "url": "https://i.scdn.co/image/ab67616100005174fa1b812f78bab1a7c110953b",
+          "width": 320
+        },
+        {
+          "height": 160,
+          "url": "https://i.scdn.co/image/ab6761610000f178fa1b812f78bab1a7c110953b",
+          "width": 160
+        }
+      ],
+      "name": "君島大空",
+      "popularity": 41,
+      "type": "artist",
+      "uri": "spotify:artist:5rjahCZtY8h4y2EHCnpgtQ"
+    },
+    {
+      "external_urls": {
+        "spotify": "https://open.spotify.com/artist/0god7pF7tcRMNTey5gUjpd"
+      },
+      "followers": {
+        "href": null,
+        "total": 21718
+      },
+      "genres": [
+        "한국 랩",
+        "익스페리멘탈 힙합"
+      ],
+      "href": "https://api.spotify.com/v1/artists/0god7pF7tcRMNTey5gUjpd",
+      "id": "0god7pF7tcRMNTey5gUjpd",
+      "images": [
+        {
+          "height": 640,
+          "url": "https://i.scdn.co/image/ab6761610000e5ebd94e9a877a438ced02ef21ae",
+          "width": 640
+        },
+        {
+          "height": 320,
+          "url": "https://i.scdn.co/image/ab67616100005174d94e9a877a438ced02ef21ae",
+          "width": 320
+        },
+        {
+          "height": 160,
+          "url": "https://i.scdn.co/image/ab6761610000f178d94e9a877a438ced02ef21ae",
+          "width": 160
+        }
+      ],
+      "name": "XXX",
+      "popularity": 25,
+      "type": "artist",
+      "uri": "spotify:artist:0god7pF7tcRMNTey5gUjpd"
+    },
+    {
+      "external_urls": {
+        "spotify": "https://open.spotify.com/artist/4UK2Lzi6fBfUi9rpDt6cik"
+      },
+      "followers": {
+        "href": null,
+        "total": 3382310
+      },
+      "genres": [
+        "J-pop",
+        "일본 록",
+        "일본 인디",
+        "애니메이션"
+      ],
+      "href": "https://api.spotify.com/v1/artists/4UK2Lzi6fBfUi9rpDt6cik",
+      "id": "4UK2Lzi6fBfUi9rpDt6cik",
+      "images": [
+        {
+          "height": 640,
+          "url": "https://i.scdn.co/image/ab6761610000e5ebe62cff9c6018ae5616b01eab",
+          "width": 640
+        },
+        {
+          "height": 320,
+          "url": "https://i.scdn.co/image/ab67616100005174e62cff9c6018ae5616b01eab",
+          "width": 320
+        },
+        {
+          "height": 160,
+          "url": "https://i.scdn.co/image/ab6761610000f178e62cff9c6018ae5616b01eab",
+          "width": 160
+        }
+      ],
+      "name": "ヨルシカ",
+      "popularity": 73,
+      "type": "artist",
+      "uri": "spotify:artist:4UK2Lzi6fBfUi9rpDt6cik"
+    },
+    {
+      "external_urls": {
+        "spotify": "https://open.spotify.com/artist/70lDezP0StoGMa58IcLXCc"
+      },
+      "followers": {
+        "href": null,
+        "total": 8750
+      },
+      "genres": [
+        "슈게이징",
+        "일본 인디",
+        "드림 팝"
+      ],
+      "href": "https://api.spotify.com/v1/artists/70lDezP0StoGMa58IcLXCc",
+      "id": "70lDezP0StoGMa58IcLXCc",
+      "images": [
+        {
+          "height": 640,
+          "url": "https://i.scdn.co/image/ab6761610000e5ebeb4cea79de6acdfbec6e1941",
+          "width": 640
+        },
+        {
+          "height": 320,
+          "url": "https://i.scdn.co/image/ab67616100005174eb4cea79de6acdfbec6e1941",
+          "width": 320
+        },
+        {
+          "height": 160,
+          "url": "https://i.scdn.co/image/ab6761610000f178eb4cea79de6acdfbec6e1941",
+          "width": 160
+        }
+      ],
+      "name": "iVy",
+      "popularity": 34,
+      "type": "artist",
+      "uri": "spotify:artist:70lDezP0StoGMa58IcLXCc"
+    },
+    {
+      "external_urls": {
+        "spotify": "https://open.spotify.com/artist/2h93pZq0e7k5yf4dywlkpM"
+      },
+      "followers": {
+        "href": null,
+        "total": 21040754
+      },
+      "genres": [],
+      "href": "https://api.spotify.com/v1/artists/2h93pZq0e7k5yf4dywlkpM",
+      "id": "2h93pZq0e7k5yf4dywlkpM",
+      "images": [
+        {
+          "height": 640,
+          "url": "https://i.scdn.co/image/ab6761610000e5ebee3123e593174208f9754fab",
+          "width": 640
+        },
+        {
+          "height": 320,
+          "url": "https://i.scdn.co/image/ab67616100005174ee3123e593174208f9754fab",
+          "width": 320
+        },
+        {
+          "height": 160,
+          "url": "https://i.scdn.co/image/ab6761610000f178ee3123e593174208f9754fab",
+          "width": 160
+        }
+      ],
+      "name": "Frank Ocean",
+      "popularity": 86,
+      "type": "artist",
+      "uri": "spotify:artist:2h93pZq0e7k5yf4dywlkpM"
+    },
+    {
+      "external_urls": {
+        "spotify": "https://open.spotify.com/artist/6a8cUmqOsXmjzq1aWKiVpH"
+      },
+      "followers": {
+        "href": null,
+        "total": 52216
+      },
+      "genres": [
+        "한국 랩"
+      ],
+      "href": "https://api.spotify.com/v1/artists/6a8cUmqOsXmjzq1aWKiVpH",
+      "id": "6a8cUmqOsXmjzq1aWKiVpH",
+      "images": [
+        {
+          "height": 640,
+          "url": "https://i.scdn.co/image/ab6761610000e5eb5c6eeacbdfbc00a8940a2e5f",
+          "width": 640
+        },
+        {
+          "height": 320,
+          "url": "https://i.scdn.co/image/ab676161000051745c6eeacbdfbc00a8940a2e5f",
+          "width": 320
+        },
+        {
+          "height": 160,
+          "url": "https://i.scdn.co/image/ab6761610000f1785c6eeacbdfbc00a8940a2e5f",
+          "width": 160
+        }
+      ],
+      "name": "이센스",
+      "popularity": 39,
+      "type": "artist",
+      "uri": "spotify:artist:6a8cUmqOsXmjzq1aWKiVpH"
+    },
+    {
+      "external_urls": {
+        "spotify": "https://open.spotify.com/artist/1Bl6wpkWCQ4KVgnASpvzzA"
+      },
+      "followers": {
+        "href": null,
+        "total": 2286072
+      },
+      "genres": [],
+      "href": "https://api.spotify.com/v1/artists/1Bl6wpkWCQ4KVgnASpvzzA",
+      "id": "1Bl6wpkWCQ4KVgnASpvzzA",
+      "images": [
+        {
+          "height": 640,
+          "url": "https://i.scdn.co/image/ab6761610000e5eb5685a95f87c28ae5efc5ba48",
+          "width": 640
+        },
+        {
+          "height": 320,
+          "url": "https://i.scdn.co/image/ab676161000051745685a95f87c28ae5efc5ba48",
+          "width": 320
+        },
+        {
+          "height": 160,
+          "url": "https://i.scdn.co/image/ab6761610000f1785685a95f87c28ae5efc5ba48",
+          "width": 160
+        }
+      ],
+      "name": "BROCKHAMPTON",
+      "popularity": 64,
+      "type": "artist",
+      "uri": "spotify:artist:1Bl6wpkWCQ4KVgnASpvzzA"
+    },
+    {
+      "external_urls": {
+        "spotify": "https://open.spotify.com/artist/2IPuwNd2QsC2AXZ9gBW7d1"
+      },
+      "followers": {
+        "href": null,
+        "total": 64480
+      },
+      "genres": [
+        "일본 인디",
+        "일본 록",
+        "J-pop"
+      ],
+      "href": "https://api.spotify.com/v1/artists/2IPuwNd2QsC2AXZ9gBW7d1",
+      "id": "2IPuwNd2QsC2AXZ9gBW7d1",
+      "images": [
+        {
+          "height": 640,
+          "url": "https://i.scdn.co/image/ab6761610000e5eb3d5a0bf12ded4fcef52c8497",
+          "width": 640
+        },
+        {
+          "height": 320,
+          "url": "https://i.scdn.co/image/ab676161000051743d5a0bf12ded4fcef52c8497",
+          "width": 320
+        },
+        {
+          "height": 160,
+          "url": "https://i.scdn.co/image/ab6761610000f1783d5a0bf12ded4fcef52c8497",
+          "width": 160
+        }
+      ],
+      "name": "Blooming Bungei",
+      "popularity": 42,
+      "type": "artist",
+      "uri": "spotify:artist:2IPuwNd2QsC2AXZ9gBW7d1"
+    },
+    {
+      "external_urls": {
+        "spotify": "https://open.spotify.com/artist/38WbKH6oKAZskBhqDFA8Uj"
+      },
+      "followers": {
+        "href": null,
+        "total": 2242137
+      },
+      "genres": [
+        "J-pop",
+        "일본 록",
+        "애니메이션",
+        "일본 인디"
+      ],
+      "href": "https://api.spotify.com/v1/artists/38WbKH6oKAZskBhqDFA8Uj",
+      "id": "38WbKH6oKAZskBhqDFA8Uj",
+      "images": [
+        {
+          "height": 640,
+          "url": "https://i.scdn.co/image/ab6761610000e5ebb38a96d85b0580670123280e",
+          "width": 640
+        },
+        {
+          "height": 320,
+          "url": "https://i.scdn.co/image/ab67616100005174b38a96d85b0580670123280e",
+          "width": 320
+        },
+        {
+          "height": 160,
+          "url": "https://i.scdn.co/image/ab6761610000f178b38a96d85b0580670123280e",
+          "width": 160
+        }
+      ],
+      "name": "ZUTOMAYO",
+      "popularity": 68,
+      "type": "artist",
+      "uri": "spotify:artist:38WbKH6oKAZskBhqDFA8Uj"
+    },
+    {
+      "external_urls": {
+        "spotify": "https://open.spotify.com/artist/0Y4inQK6OespitzD6ijMwb"
+      },
+      "followers": {
+        "href": null,
+        "total": 1514705
+      },
+      "genres": [
+        "재즈 랩",
+        "얼터너티브 힙합"
+      ],
+      "href": "https://api.spotify.com/v1/artists/0Y4inQK6OespitzD6ijMwb",
+      "id": "0Y4inQK6OespitzD6ijMwb",
+      "images": [
+        {
+          "height": 640,
+          "url": "https://i.scdn.co/image/ab6761610000e5eb499def7bd0369aa26a22273c",
+          "width": 640
+        },
+        {
+          "height": 320,
+          "url": "https://i.scdn.co/image/ab67616100005174499def7bd0369aa26a22273c",
+          "width": 320
+        },
+        {
+          "height": 160,
+          "url": "https://i.scdn.co/image/ab6761610000f178499def7bd0369aa26a22273c",
+          "width": 160
+        }
+      ],
+      "name": "Freddie Gibbs",
+      "popularity": 70,
+      "type": "artist",
+      "uri": "spotify:artist:0Y4inQK6OespitzD6ijMwb"
+    },
+    {
+      "external_urls": {
+        "spotify": "https://open.spotify.com/artist/0hLfZOfwBDMejvKITJksrG"
+      },
+      "followers": {
+        "href": null,
+        "total": 24473
+      },
+      "genres": [
+        "J-pop",
+        "일본 록"
+      ],
+      "href": "https://api.spotify.com/v1/artists/0hLfZOfwBDMejvKITJksrG",
+      "id": "0hLfZOfwBDMejvKITJksrG",
+      "images": [
+        {
+          "height": 640,
+          "url": "https://i.scdn.co/image/ab6761610000e5eb4394c53dd81a145f0b4cb455",
+          "width": 640
+        },
+        {
+          "height": 320,
+          "url": "https://i.scdn.co/image/ab676161000051744394c53dd81a145f0b4cb455",
+          "width": 320
+        },
+        {
+          "height": 160,
+          "url": "https://i.scdn.co/image/ab6761610000f1784394c53dd81a145f0b4cb455",
+          "width": 160
+        }
+      ],
+      "name": "NELKE",
+      "popularity": 39,
+      "type": "artist",
+      "uri": "spotify:artist:0hLfZOfwBDMejvKITJksrG"
+    },
+    {
+      "external_urls": {
+        "spotify": "https://open.spotify.com/artist/5LNw7upmiw5BIrN2UPLeL0"
+      },
+      "followers": {
+        "href": null,
+        "total": 21430
+      },
+      "genres": [
+        "J-pop"
+      ],
+      "href": "https://api.spotify.com/v1/artists/5LNw7upmiw5BIrN2UPLeL0",
+      "id": "5LNw7upmiw5BIrN2UPLeL0",
+      "images": [
+        {
+          "height": 640,
+          "url": "https://i.scdn.co/image/ab6761610000e5eb47eef2b011e1087f0483d4fd",
+          "width": 640
+        },
+        {
+          "height": 320,
+          "url": "https://i.scdn.co/image/ab6761610000517447eef2b011e1087f0483d4fd",
+          "width": 320
+        },
+        {
+          "height": 160,
+          "url": "https://i.scdn.co/image/ab6761610000f17847eef2b011e1087f0483d4fd",
+          "width": 160
+        }
+      ],
+      "name": "PompadollS",
+      "popularity": 38,
+      "type": "artist",
+      "uri": "spotify:artist:5LNw7upmiw5BIrN2UPLeL0"
+    },
+    {
+      "external_urls": {
+        "spotify": "https://open.spotify.com/artist/3PP6ghmOlDl2jaKaH0avUN"
+      },
+      "followers": {
+        "href": null,
+        "total": 447842
+      },
+      "genres": [
+        "아트 록",
+        "포스트 록"
+      ],
+      "href": "https://api.spotify.com/v1/artists/3PP6ghmOlDl2jaKaH0avUN",
+      "id": "3PP6ghmOlDl2jaKaH0avUN",
+      "images": [
+        {
+          "height": 640,
+          "url": "https://i.scdn.co/image/ab6761610000e5ebb6ace408c5e1762b36061f23",
+          "width": 640
+        },
+        {
+          "height": 320,
+          "url": "https://i.scdn.co/image/ab67616100005174b6ace408c5e1762b36061f23",
+          "width": 320
+        },
+        {
+          "height": 160,
+          "url": "https://i.scdn.co/image/ab6761610000f178b6ace408c5e1762b36061f23",
+          "width": 160
+        }
+      ],
+      "name": "Black Country, New Road",
+      "popularity": 58,
+      "type": "artist",
+      "uri": "spotify:artist:3PP6ghmOlDl2jaKaH0avUN"
+    },
+    {
+      "external_urls": {
+        "spotify": "https://open.spotify.com/artist/1rMlvq1rWmYdg0lzZcf7G0"
+      },
+      "followers": {
+        "href": null,
+        "total": 24693
+      },
+      "genres": [
+        "매스 록",
+        "일본 록",
+        "일본 인디",
+        "슈게이징"
+      ],
+      "href": "https://api.spotify.com/v1/artists/1rMlvq1rWmYdg0lzZcf7G0",
+      "id": "1rMlvq1rWmYdg0lzZcf7G0",
+      "images": [
+        {
+          "height": 640,
+          "url": "https://i.scdn.co/image/ab67616d0000b273120d7076de688d168f3ed5eb",
+          "width": 640
+        },
+        {
+          "height": 300,
+          "url": "https://i.scdn.co/image/ab67616d00001e02120d7076de688d168f3ed5eb",
+          "width": 300
+        },
+        {
+          "height": 64,
+          "url": "https://i.scdn.co/image/ab67616d00004851120d7076de688d168f3ed5eb",
+          "width": 64
+        }
+      ],
+      "name": "chouchou merged syrups.",
+      "popularity": 37,
+      "type": "artist",
+      "uri": "spotify:artist:1rMlvq1rWmYdg0lzZcf7G0"
+    },
+    {
+      "external_urls": {
+        "spotify": "https://open.spotify.com/artist/1YBOO3E40cq9VVNUHeQGDm"
+      },
+      "followers": {
+        "href": null,
+        "total": 11979
+      },
+      "genres": [
+        "하이퍼팝",
+        "한국 랩"
+      ],
+      "href": "https://api.spotify.com/v1/artists/1YBOO3E40cq9VVNUHeQGDm",
+      "id": "1YBOO3E40cq9VVNUHeQGDm",
+      "images": [
+        {
+          "height": 640,
+          "url": "https://i.scdn.co/image/ab6761610000e5eb2c128bbda4208d00c733fd05",
+          "width": 640
+        },
+        {
+          "height": 320,
+          "url": "https://i.scdn.co/image/ab676161000051742c128bbda4208d00c733fd05",
+          "width": 320
+        },
+        {
+          "height": 160,
+          "url": "https://i.scdn.co/image/ab6761610000f1782c128bbda4208d00c733fd05",
+          "width": 160
+        }
+      ],
+      "name": "SYSTEM SEOUL",
+      "popularity": 50,
+      "type": "artist",
+      "uri": "spotify:artist:1YBOO3E40cq9VVNUHeQGDm"
+    },
+    {
+      "external_urls": {
+        "spotify": "https://open.spotify.com/artist/1tgZVOBOut0nS8CJ5SIBh5"
+      },
+      "followers": {
+        "href": null,
+        "total": 24006
+      },
+      "genres": [
+        "하이퍼팝",
+        "j-랩"
+      ],
+      "href": "https://api.spotify.com/v1/artists/1tgZVOBOut0nS8CJ5SIBh5",
+      "id": "1tgZVOBOut0nS8CJ5SIBh5",
+      "images": [
+        {
+          "height": 640,
+          "url": "https://i.scdn.co/image/ab6761610000e5eb1a5dd2e51c2d2c2554efe312",
+          "width": 640
+        },
+        {
+          "height": 320,
+          "url": "https://i.scdn.co/image/ab676161000051741a5dd2e51c2d2c2554efe312",
+          "width": 320
+        },
+        {
+          "height": 160,
+          "url": "https://i.scdn.co/image/ab6761610000f1781a5dd2e51c2d2c2554efe312",
+          "width": 160
+        }
+      ],
+      "name": "Peterparker69",
+      "popularity": 40,
+      "type": "artist",
+      "uri": "spotify:artist:1tgZVOBOut0nS8CJ5SIBh5"
+    },
+    {
+      "external_urls": {
+        "spotify": "https://open.spotify.com/artist/0XZZIl1leGxvvIsfL158Eg"
+      },
+      "followers": {
+        "href": null,
+        "total": 4190
+      },
+      "genres": [],
+      "href": "https://api.spotify.com/v1/artists/0XZZIl1leGxvvIsfL158Eg",
+      "id": "0XZZIl1leGxvvIsfL158Eg",
+      "images": [
+        {
+          "height": 640,
+          "url": "https://i.scdn.co/image/ab6761610000e5eb284c74c5eab4950ede87ebe4",
+          "width": 640
+        },
+        {
+          "height": 320,
+          "url": "https://i.scdn.co/image/ab67616100005174284c74c5eab4950ede87ebe4",
+          "width": 320
+        },
+        {
+          "height": 160,
+          "url": "https://i.scdn.co/image/ab6761610000f178284c74c5eab4950ede87ebe4",
+          "width": 160
+        }
+      ],
+      "name": "Flow Music",
+      "popularity": 37,
+      "type": "artist",
+      "uri": "spotify:artist:0XZZIl1leGxvvIsfL158Eg"
+    },
+    {
+      "external_urls": {
+        "spotify": "https://open.spotify.com/artist/4xPQFgDA5M2xa0ZGo5iIsv"
+      },
+      "followers": {
+        "href": null,
+        "total": 1058864
+      },
+      "genres": [],
+      "href": "https://api.spotify.com/v1/artists/4xPQFgDA5M2xa0ZGo5iIsv",
+      "id": "4xPQFgDA5M2xa0ZGo5iIsv",
+      "images": [
+        {
+          "height": 640,
+          "url": "https://i.scdn.co/image/ab6761610000e5eba670555775b5381ac0519658",
+          "width": 640
+        },
+        {
+          "height": 320,
+          "url": "https://i.scdn.co/image/ab67616100005174a670555775b5381ac0519658",
+          "width": 320
+        },
+        {
+          "height": 160,
+          "url": "https://i.scdn.co/image/ab6761610000f178a670555775b5381ac0519658",
+          "width": 160
+        }
+      ],
+      "name": "¥$",
+      "popularity": 72,
+      "type": "artist",
+      "uri": "spotify:artist:4xPQFgDA5M2xa0ZGo5iIsv"
+    }
+  ],
+  "total": 575,
+  "limit": 20,
+  "offset": 13,
+  "href": "https://api.spotify.com/v1/me/top/artists?offset=13&limit=20&locale=ko-KR,ko;q%3D0.9,en;q%3D0.8,en-US;q%3D0.7,ja;q%3D0.6",
+  "next": "https://api.spotify.com/v1/me/top/artists?offset=33&limit=20&locale=ko-KR,ko;q%3D0.9,en;q%3D0.8,en-US;q%3D0.7,ja;q%3D0.6",
+  "previous": "https://api.spotify.com/v1/me/top/artists?offset=0&limit=20&locale=ko-KR,ko;q%3D0.9,en;q%3D0.8,en-US;q%3D0.7,ja;q%3D0.6"
+}

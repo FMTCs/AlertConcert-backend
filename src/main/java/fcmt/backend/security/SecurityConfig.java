@@ -26,7 +26,8 @@ public class SecurityConfig {
 		http.csrf(csrf -> csrf.disable())
 			.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 			.authorizeHttpRequests(auth -> auth
-				.requestMatchers("/api/login", "/api/register", "/api/login", "/api/test/**", "/api/recommend")// TODO:
+				.requestMatchers("/api/login", "/api/register", "/api/login", "/api/test/**", "/api/recommend",
+						"/api/interest")// TODO:
 				// 테스트를
 				// 위해
 				// /test/**경로

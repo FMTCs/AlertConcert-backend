@@ -2,14 +2,21 @@ package fcmt.backend.service;
 
 import fcmt.backend.dto.RecommendResponseDto;
 import fcmt.backend.entity.Concert;
+import fcmt.backend.entity.User;
 import fcmt.backend.entity.UserPreference;
 import fcmt.backend.repository.ConcertRepository;
 import fcmt.backend.repository.UserPreferenceRepository;
+import fcmt.backend.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
 
+import java.io.IOException;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -23,6 +30,10 @@ public class RecommendationService {
 	private final UserPreferenceRepository userPreferenceRepository;
 
 	private final ConcertRepository concertRepository;
+
+	private final ObjectMapper objectMapper;
+
+	private final UserRepository userRepository;
 
 	@Transactional(readOnly = true)
 	@SuppressWarnings("unchecked") // 형변환 경고 무시
@@ -48,18 +59,25 @@ public class RecommendationService {
 		List<RecommendResponseDto.ArtistDto> topArtists = items.stream()
 			.map(item -> RecommendResponseDto.ArtistDto.builder()
 				.name((String) item.get("name"))
-				.genres((List<String>) item.get("genres")) // Object -> List<String>
+				.artistId((String) item.get("id"))
 				.build())
 			.collect(Collectors.toList());
 
 		// 추천에 사용할 장르 합치기
-		List<String> allPreferredGenres = topArtists.stream()
-			.filter(artist -> artist.getGenres() != null)
-			.flatMap(artist -> artist.getGenres().stream())
+		List<String> allPreferredGenres = items.stream()
+			.filter(item -> item.get("genres") != null)
+			.flatMap(item -> ((List<String>) item.get("genres")).stream())
 			.toList();
 
 		Map<String, Long> genreFrequencyMap = allPreferredGenres.stream()
 			.collect(Collectors.groupingBy(String::toString, Collectors.counting()));
+
+		List<RecommendResponseDto.GenreDto> topGenreDtos = genreFrequencyMap.entrySet()
+			.stream()
+			.sorted(Map.Entry.<String, Long>comparingByValue().reversed()) // 빈도수 내림차순 정렬
+			.limit(10) // 상위 10개 추출
+			.map(entry -> RecommendResponseDto.GenreDto.builder().name(entry.getKey()).build())
+			.toList();
 
 		long totalFrequencyCount = allPreferredGenres.isEmpty() ? 1 : allPreferredGenres.size();
 
@@ -93,10 +111,46 @@ public class RecommendationService {
 				.bookingUrl(c.getBookingUrl())
 				.matchingRate(matchingRate)
 				.build();
-		}).sorted((a, b) -> Integer.compare(b.getMatchingRate(), a.getMatchingRate())).collect(Collectors.toList());
+		}).sorted((a, b) -> Integer.compare(b.getMatchingRate(), a.getMatchingRate())).toList();
 
 		// 6. 결과 반환
-		return RecommendResponseDto.builder().topArtists(topArtists).recommendedConcerts(concertDtos).build();
+		return RecommendResponseDto.builder()
+			.topArtists(topArtists)
+			.topGenres(topGenreDtos)
+			.recommendedConcerts(concertDtos)
+			.build();
+	}
+
+	@Transactional
+	public RecommendResponseDto updatePreference(Long userId) {
+		try {
+			User user = userRepository.findById(userId)
+				.orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다." + userId));
+
+			ClassPathResource resource = new ClassPathResource("interest.json");
+			Map<String, Object> dummyPrefMap = objectMapper.readValue(resource.getInputStream(), new TypeReference<>() {
+			});
+
+			UserPreference preference = userPreferenceRepository.findById(userId).orElseGet(() -> {
+				UserPreference tempPreference = UserPreference.builder()
+					.user(user)
+					.preference(dummyPrefMap)
+					.updatedAt(OffsetDateTime.now())
+					.build();
+				return userPreferenceRepository.save(tempPreference);
+			});
+
+			preference.setPreference(dummyPrefMap);
+			preference.setUpdatedAt(OffsetDateTime.now());
+
+			userPreferenceRepository.save(preference);
+
+			return getRecommendation(userId);
+
+		}
+		catch (IOException e) {
+			throw new RuntimeException("업데이트 실패" + e.getMessage());
+		}
 	}
 
 }

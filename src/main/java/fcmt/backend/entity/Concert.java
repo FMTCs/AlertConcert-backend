@@ -37,10 +37,10 @@ public class Concert {
 	@Column(name = "casts", columnDefinition = "jsonb")
 	private List<Map<String, Object>> casts;
 
-	@Column(name = "booking_start_date")
+	@Column(name = "performance_start_date")
 	private LocalDate performanceStartDate;
 
-	@Column(name = "booking_end_date")
+	@Column(name = "performance_end_date")
 	private LocalDate performanceEndDate;
 
 	@Column(name = "booking_url")
