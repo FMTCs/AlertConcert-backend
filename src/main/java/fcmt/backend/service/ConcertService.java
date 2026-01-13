@@ -54,30 +54,52 @@ public class ConcertService {
 		String stdate = now.format(formatter);
 		String eddate = oneYearLater.format(formatter);
 
+		// TODO: 몇 개의 공연 정보를 들고 올 지 결정 필요.
+		int cpage = 1;
+		int rows = 100;
+		boolean hasMoreData = true;
+
 		log.info("수집 기간: {} ~ {}", stdate, eddate);
 
-		String listUrl = String.format(
-				"http://www.kopis.or.kr/openApi/restful/pblprfr?service=%s&stdate=%s&eddate=%s&cpage=1&rows=100",
-				serviceKey, stdate, eddate);
+		while (hasMoreData) {
+			String listUrl = String.format(
+					"http://www.kopis.or.kr/openApi/restful/pblprfr?service=%s&stdate=%s&eddate=%s&cpage=%d&rows=%d",
+					serviceKey, stdate, eddate, cpage, rows);
 
-		KopisListResponse listResponse = restTemplate.getForObject(listUrl, KopisListResponse.class);
+			KopisListResponse listResponse = restTemplate.getForObject(listUrl, KopisListResponse.class);
 
-		if (listResponse != null && listResponse.getConcertList() != null) {
-			for (KopisListResponse.KopisListDto listDto : listResponse.getConcertList()) {
-				try {
-					fetchAndSaveDetail(listDto.getMt20id());
-					// 0.2초 대기 (1초에 최대 약 5번 요청하게 됨)
-					Thread.sleep(200);
+			if (listResponse != null && listResponse.getConcertList() != null) {
+				for (KopisListResponse.KopisListDto listDto : listResponse.getConcertList()) {
+					try {
+						fetchAndSaveDetail(listDto.getMt20id());
+						// 0.2초 대기 (1초에 최대 약 5번 요청하게 됨)
+						Thread.sleep(200);
 
+					}
+					catch (InterruptedException e) {
+						log.error("작업 중 인터럽트 발생: {}", e.getMessage());
+						Thread.currentThread().interrupt(); // 상태 복구
+						break;
+					}
+					catch (Exception e) {
+						log.error("상세 정보 저장 실패 (ID: {}): {}", listDto.getMt20id(), e.getMessage());
+					}
 				}
-				catch (InterruptedException e) {
-					log.error("작업 중 인터럽트 발생: {}", e.getMessage());
-					Thread.currentThread().interrupt(); // 상태 복구
+				cpage++;
+				// TODO: 테스트를 위해서 300개로 제한. 실제로 돌릴 땐 제거하면 됨.
+				if (cpage > 3)
 					break;
-				}
-				catch (Exception e) {
-					log.error("상세 정보 저장 실패 (ID: {}): {}", listDto.getMt20id(), e.getMessage());
-				}
+			}
+			else {
+				// 더 이상 가져올 데이터가 없으면 루프 종료
+				log.info("모든 데이터 수집 완료. 마지막 페이지: {}", cpage - 1);
+				hasMoreData = false;
+			}
+			// API 서버 부하 방지를 위해 페이지 전환 사이에도 잠깐 쉬어주기
+			try {
+				Thread.sleep(500);
+			}
+			catch (InterruptedException ignored) {
 			}
 		}
 	}
