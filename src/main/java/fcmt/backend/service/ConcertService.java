@@ -13,9 +13,11 @@ import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.Optional;
-import java.util.Map;
-import java.util.List;
+//import java.util.Optional;
+//import java.util.Map;
+//import java.util.List;
+//import java.util.ArrayList;
+import java.util.*;
 
 @Slf4j
 @Service
@@ -64,8 +66,8 @@ public class ConcertService {
 			for (KopisListResponse.KopisListDto listDto : listResponse.getConcertList()) {
 				try {
 					fetchAndSaveDetail(listDto.getMt20id());
-					// 0.15초 대기 (1초에 최대 약 6~7번 요청하게 됨)
-					Thread.sleep(150);
+					// 0.2초 대기 (1초에 최대 약 5번 요청하게 됨)
+					Thread.sleep(200);
 
 				}
 				catch (InterruptedException e) {
@@ -91,10 +93,24 @@ public class ConcertService {
 
 	private void saveOrUpdateConcert(KopisDetailResponse.KopisDetailDto dto) {
 		// Map으로 처리 - 출연진(Cast) 정보 있으면 저장하고, 없으면 null로 저장
+		List<Map<String, Object>> castList = new ArrayList<>();
 		String rawCast = dto.getPrfcast();
-		Map<String, Object> castMap = null;
+
 		if (rawCast != null && !rawCast.isBlank() && !rawCast.equals("-")) {
-			castMap = Map.of("rawCast", rawCast);
+			String[] actors = rawCast.split(",");
+			for (String actor : actors) {
+				Map<String, Object> actorMap = new HashMap<>(); // Map.of는 null을 허용하지 않아서
+																// HashMap을 사용해야.
+				actorMap.put("id", null); // SpotifyID
+				actorMap.put("name", actor.trim());
+				castList.add(actorMap);
+			}
+		}
+		else {
+			Map<String, Object> emptyMap = new HashMap<>();
+			emptyMap.put("id", null);
+			emptyMap.put("name", null);
+			castList.add(emptyMap);
 		}
 
 		// List로 처리 - Genre
@@ -111,8 +127,9 @@ public class ConcertService {
 			concert.setPosterImgUrl(dto.getPoster());
 			concert.setBookingUrl(dto.getRelates() != null ? dto.getRelates().getFirstUrl() : null);
 			// 만약 기존에 casts 정보가 없었는데 이번에 들어왔다면 업데이트
-			if (concert.getCasts() == null) {
-				concert.setCasts(castMap);
+			if (concert.getCasts() == null) { // TODO: kopis api에서 주는 배우리스트가 변경되면 다시 null로
+												// 채울 것인가?
+				concert.setCasts(castList);
 			}
 			concertRepository.save(concert);
 			log.info("업데이트 완료: {}", dto.getPrfnm());
@@ -126,7 +143,7 @@ public class ConcertService {
 				.performanceStartDate(LocalDate.parse(dto.getPrfpdfrom().replace(".", "-")))
 				.performanceEndDate(LocalDate.parse(dto.getPrfpdto().replace(".", "-")))
 				.bookingUrl(dto.getRelates() != null ? dto.getRelates().getFirstUrl() : null)
-				.casts(castMap)
+				.casts(castList)
 				.build();
 			concertRepository.save(newConcert);
 			log.info("신규 저장 완료: {}", dto.getPrfnm());
