@@ -10,6 +10,8 @@ import java.util.Map;
 
 @Entity
 @Getter
+@Setter
+@Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Table(name = "user_preferences")
