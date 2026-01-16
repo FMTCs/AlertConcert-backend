@@ -25,7 +25,8 @@ public class SecurityConfig {
 			// 서버가 세션을 저장하지 않는다 ( 정책 )
 			.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 			.authorizeHttpRequests(auth -> auth
-				.requestMatchers("/auth/login", "/auth/register", "/auth/logout", "/api/test/**", "/api/recommend")
+				.requestMatchers("/auth/login", "/auth/register", "/auth/logout", "/api/test/**", "/api/recommend",
+						"/api/interest")
 				.permitAll()
 				.anyRequest()
 				.authenticated())

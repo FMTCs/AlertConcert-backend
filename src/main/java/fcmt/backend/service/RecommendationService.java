@@ -7,6 +7,8 @@ import fcmt.backend.entity.UserPreference;
 import fcmt.backend.repository.ConcertRepository;
 import fcmt.backend.repository.UserPreferenceRepository;
 import fcmt.backend.repository.UserRepository;
+import fcmt.backend.security.JwtTokenProvider;
+import io.jsonwebtoken.Claims;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.ClassPathResource;
@@ -35,9 +37,13 @@ public class RecommendationService {
 
 	private final UserRepository userRepository;
 
+	private final JwtTokenProvider jwtTokenProvider;
+
 	@Transactional(readOnly = true)
 	@SuppressWarnings("unchecked") // 형변환 경고 무시
-	public RecommendResponseDto getRecommendation(Long userId) {
+	public RecommendResponseDto getRecommendation(String token) {
+		Claims claims = jwtTokenProvider.parseClaimsAllowExpired(token);
+		Long userId = claims.get("uid", Long.class);
 		// 1. UserPreference 조회
 		UserPreference preference = userPreferenceRepository.findById(userId)
 			.orElseThrow(() -> new EntityNotFoundException("선호도 정보가 없습니다. ID: " + userId));
@@ -122,8 +128,11 @@ public class RecommendationService {
 	}
 
 	@Transactional
-	public RecommendResponseDto updatePreference(Long userId) {
+	public RecommendResponseDto updatePreference(String token) {
 		try {
+			Claims claims = jwtTokenProvider.parseClaimsAllowExpired(token);
+			System.out.println(claims);
+			Long userId = claims.get("uid", Long.class);
 			User user = userRepository.findById(userId)
 				.orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다." + userId));
 
@@ -145,7 +154,7 @@ public class RecommendationService {
 
 			userPreferenceRepository.save(preference);
 
-			return getRecommendation(userId);
+			return getRecommendation(token);
 
 		}
 		catch (IOException e) {

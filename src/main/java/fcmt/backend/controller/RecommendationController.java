@@ -14,17 +14,19 @@ public class RecommendationController {
 	private final RecommendationService recommendationService;
 
 	@GetMapping("/recommend")
-	public ResponseEntity<RecommendResponseDto> getRecommendation(@RequestParam(name = "userId") Long userId) {
+	public ResponseEntity<RecommendResponseDto> getRecommendation(@RequestHeader("Authorization") String authHeader) {
 		// 서비스 로직 호출 (DB 조회 -> 장르 추출 -> 공연 매칭)
-		RecommendResponseDto response = recommendationService.getRecommendation(userId);
+		String accessToken = authHeader.substring(7);
+		System.out.println("accessToken: " + accessToken);
+		RecommendResponseDto response = recommendationService.getRecommendation(accessToken);
 
 		return ResponseEntity.ok(response);
 	}
 
 	@PostMapping("/interest")
-	public ResponseEntity<RecommendResponseDto> interest(@RequestParam(name = "userId") Long userId) {
-
-		RecommendResponseDto response = recommendationService.updatePreference(userId);
+	public ResponseEntity<RecommendResponseDto> interest(@RequestHeader("Authorization") String authHeader) {
+		String accessToken = authHeader.substring(7);
+		RecommendResponseDto response = recommendationService.updatePreference(accessToken);
 
 		return ResponseEntity.ok(response);
 	}
