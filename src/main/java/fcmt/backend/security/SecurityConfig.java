@@ -20,7 +20,8 @@ public class SecurityConfig {
 
 	@Bean
 	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-		http.csrf(csrf -> csrf.disable())
+		http.cors(cors -> cors.configurationSource(corsConfigurationSource()))
+			.csrf(csrf -> csrf.disable())
 			// 서버가 세션을 저장하지 않는다 ( 정책 )
 			.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 			.authorizeHttpRequests(auth -> auth
@@ -30,6 +31,22 @@ public class SecurityConfig {
 				.authenticated())
 			.addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 		return http.build();
+	}
+
+	@Bean
+	public org.springframework.web.cors.CorsConfigurationSource corsConfigurationSource() {
+		org.springframework.web.cors.CorsConfiguration configuration = new org.springframework.web.cors.CorsConfiguration();
+
+		// 프론트엔드 주소 허용 (리액트 기본 포트 3000)
+		configuration.addAllowedOrigin("http://localhost:3000");
+
+		configuration.addAllowedMethod("*"); // GET, POST, PUT, DELETE 모두 허용
+		configuration.addAllowedHeader("*"); // 모든 Header 허용
+		configuration.setAllowCredentials(true); // 자격 증명(쿠키, 인증 헤더 등) 허용
+
+		org.springframework.web.cors.UrlBasedCorsConfigurationSource source = new org.springframework.web.cors.UrlBasedCorsConfigurationSource();
+		source.registerCorsConfiguration("/**", configuration);
+		return source;
 	}
 
 	@Bean
