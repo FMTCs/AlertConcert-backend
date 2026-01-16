@@ -17,7 +17,6 @@ public class RecommendationController {
 	public ResponseEntity<RecommendResponseDto> getRecommendation(@RequestHeader("Authorization") String authHeader) {
 		// 서비스 로직 호출 (DB 조회 -> 장르 추출 -> 공연 매칭)
 		String accessToken = authHeader.substring(7);
-		System.out.println("accessToken: " + accessToken);
 		RecommendResponseDto response = recommendationService.getRecommendation(accessToken);
 
 		return ResponseEntity.ok(response);
