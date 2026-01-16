@@ -131,7 +131,6 @@ public class RecommendationService {
 	public RecommendResponseDto updatePreference(String token) {
 		try {
 			Claims claims = jwtTokenProvider.parseClaimsAllowExpired(token);
-			System.out.println(claims);
 			Long userId = claims.get("uid", Long.class);
 			User user = userRepository.findById(userId)
 				.orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다." + userId));
