@@ -1,5 +1,3 @@
--- 부족/미정 정보는 TODO로 표시
-
 BEGIN;
 
 -- =========================
@@ -20,8 +18,8 @@ CREATE TABLE IF NOT EXISTS users (
   uid BIGSERIAL PRIMARY KEY,
 
   -- NOTE: spotify 인증 먼저 -> users row를 "임시 생성(valid=false)" 할 수 있게 nullable 허용
-  username VARCHAR(64) UNIQUE, -- TODO(정책): 가입 완료 후에만 필수
-  pw_hash TEXT, -- TODO(정책): 가입 완료 후에만 필수 (bcrypt 해시 문자열)
+  username VARCHAR(64) UNIQUE,
+  pw_hash TEXT,
 
   spotify_user_id TEXT UNIQUE NOT NULL,
 
@@ -32,7 +30,7 @@ CREATE TABLE IF NOT EXISTS users (
   valid BOOLEAN NOT NULL DEFAULT FALSE,
 
   -- refresh_token은 bcrypt로 저장하면 "복호화 불가"라 사용 불가
-  spotify_refresh_token_enc TEXT -- TODO(형식): base64 문자열로 저장 가정. 바이너리면 BYTEA로 변경
+  spotify_refresh_token_enc TEXT
 );
 
 COMMENT ON COLUMN users.valid IS '회원가입 완료 여부: spotify 인증 직후 임시 생성은 false, 가입 완료 후 true';
@@ -57,7 +55,7 @@ CREATE INDEX IF NOT EXISTS idx_users_created_at ON users(created_at);
 -- =========================
 CREATE TABLE IF NOT EXISTS user_preferences (
   uid BIGINT PRIMARY KEY REFERENCES users(uid) ON DELETE CASCADE,
-  preference JSONB NOT NULL DEFAULT '{}'::jsonb, -- genre & artist JSON
+  artist_ids BIGINT[] NOT NULL DEFAULT ARRAY[]::BIGINT[],
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
@@ -68,7 +66,7 @@ CREATE TRIGGER trg_user_preferences_updated_at
   EXECUTE FUNCTION set_updated_at();
 
 CREATE INDEX IF NOT EXISTS gin_user_preferences_preference
-  ON user_preferences USING GIN (preference);
+    ON user_preferences USING GIN (artist_ids);
 
 -- =========================
 -- 3) Concerts
@@ -76,11 +74,7 @@ CREATE INDEX IF NOT EXISTS gin_user_preferences_preference
 CREATE TABLE IF NOT EXISTS concerts (
   concert_id BIGSERIAL PRIMARY KEY,
   concert_name TEXT NOT NULL,
-
-  -- 장르 복수 선택
-  genres TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
-
-  casts JSONB,
+  casts BIGINT[] NOT NULL DEFAULT ARRAY[]::BIGINT[],
 
   performance_start_date DATE,
   performance_end_date DATE,
@@ -99,6 +93,16 @@ CREATE TRIGGER trg_concerts_updated_at
   FOR EACH ROW
   EXECUTE FUNCTION set_updated_at();
 
--- 장르 포함 검색(예: WHERE genres @> ARRAY['rock']::text[])
-CREATE INDEX IF NOT EXISTS gin_concerts_genres ON concerts USING GIN (genres);
+CREATE INDEX IF NOT EXISTS gin_concerts_casts ON concerts USING GIN (casts);
+
+-- =========================
+-- 4) Artists
+-- =========================
+CREATE TABLE IF NOT EXISTS artists (
+  artist_id BIGSERIAL PRIMARY KEY,
+  spotify_artist_id TEXT UNIQUE NOT NULL,
+  genres TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[]
+);
+
+CREATE INDEX IF NOT EXISTS gin_artists_genres  ON artists USING GIN (genres);
 COMMIT;
