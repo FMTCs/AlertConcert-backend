@@ -1,6 +1,7 @@
 package fcmt.backend.service;
 
 import fcmt.backend.ai.AiClient;
+import fcmt.backend.entity.Artist;
 import fcmt.backend.entity.Concert;
 import fcmt.backend.repository.ConcertRepository;
 import fcmt.backend.dto.KopisListResponse;
@@ -13,7 +14,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDate;
-import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 import java.util.Map;
@@ -44,12 +44,12 @@ public class ConcertService {
 		// 1. KOPIS 데이터 동기화
 		syncKopisData();
 
-		// 2. AI 출연진 정보 업데이트
-		updateCastsWithAI();
-		// List<String> spotifyArtistIds;
+		// 2. AI 출연진 정보 업데이트 (이후에 구현할 메서드)
+		// updateCastsWithAI();
+//		List<Map<String, String>> spotifyArtistIds = new ArrayList<>();
 		// 3, 해당 출연진 정보를 받아서 장르 추출 및 artists 테이블 채우기
-		// List<String> genres = artistService.getArtistGenres(spotifyArtistIds);
-		log.info(">>> 일일 작업 완료");
+//		List<Long> artistIds = artistService.addAndGetArtistIds(spotifyArtistIds);
+		log.info(">>> 해당 출연진의 id 총 개수는 {}입니다.", artistIds.size());
 	}
 
 	//
