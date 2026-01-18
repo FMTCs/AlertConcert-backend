@@ -101,8 +101,9 @@ CREATE INDEX IF NOT EXISTS gin_concerts_casts ON concerts USING GIN (casts);
 CREATE TABLE IF NOT EXISTS artists (
   artist_id BIGSERIAL PRIMARY KEY,
   spotify_artist_id TEXT UNIQUE NOT NULL,
-  genres TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[]
+  genres TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
+  artist_name TEXT NOT NULL
 );
 
-CREATE INDEX IF NOT EXISTS gin_artists_genres  ON artists USING GIN (genres);
+CREATE INDEX IF NOT EXISTS gin_artists_genres ON artists USING GIN (genres);
 COMMIT;

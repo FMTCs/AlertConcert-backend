@@ -14,10 +14,8 @@ import org.springframework.web.client.RestTemplate;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Optional;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.Objects;
 
 @Slf4j
 @Service
@@ -114,45 +112,27 @@ public class ConcertService {
 	}
 
 	private void saveOrUpdateConcert(KopisDetailResponse.KopisDetailDto dto) {
-		// Map으로 처리 - 출연진(Cast) 정보 있으면 저장하고, 없으면 null로 저장
-		List<Map<String, Object>> castList = new ArrayList<>();
-		String rawCast = dto.getPrfcast();
-
-		if (rawCast != null && !rawCast.isBlank() && !rawCast.equals("-")) {
-			String[] actors = rawCast.split(",");
-			for (String actor : actors) {
-				Map<String, Object> actorMap = new HashMap<>(); // Map.of는 null을 허용하지 않아서
-																// HashMap을 사용해야.
-				actorMap.put("id", null); // SpotifyID
-				actorMap.put("name", actor.trim());
-				castList.add(actorMap);
-			}
-		}
-		else {
-			Map<String, Object> emptyMap = new HashMap<>();
-			emptyMap.put("id", null);
-			emptyMap.put("name", null);
-			castList.add(emptyMap);
-		}
-
-		// List로 처리 - Genre
-		List<String> genreList = List.of(dto.getGenrenm().split(", "));
-
+		// 출연진(Cast) 정보는 항상 비워두는 것으로 수정함. 무조건 ai로 채우게 해서 데이터의 일관성 유지
 		// 공연명 기준으로 중복 체크
 		Optional<Concert> existingConcert = concertRepository.findByConcertName(dto.getPrfnm());
 
-		if (existingConcert.isPresent()) { // TODO: updatedate 최종수정일 이용해서 업데이트 여부 결정하는 게 더
-											// 좋을지도..? 좀 귀찮넹 일단 스킵
-			// 이미 있다면 정보 업데이트 (기존 ID 유지)
+		// KOPIS 날짜 포맷 변환 (yyyy.MM.dd -> yyyy-MM-dd)
+		LocalDate startDate = LocalDate.parse(dto.getPrfpdfrom().replace(".", "-"));
+		LocalDate endDate = LocalDate.parse(dto.getPrfpdto().replace(".", "-"));
+		String currentBookingUrl = dto.getRelates() != null ? dto.getRelates().getFirstUrl() : null;
+
+		if (existingConcert.isPresent()) {
 			Concert concert = existingConcert.get();
-			concert.setGenres(genreList);
-			concert.setPosterImgUrl(dto.getPoster());
-			concert.setBookingUrl(dto.getRelates() != null ? dto.getRelates().getFirstUrl() : null);
-			// 만약 기존에 casts 정보가 없었는데 이번에 들어왔다면 업데이트
-			if (concert.getCasts() == null) { // TODO: kopis api에서 주는 배우리스트가 변경되면 다시 null로
-												// 채울 것인가?
-				concert.setCasts(castList);
+			// 변경을 감지하고, 주요 정보가 전날과 다를 때만 업데이트 수행
+			if (isDataNotChanged(concert, dto, startDate, endDate, currentBookingUrl)) {
+				return;
 			}
+
+			concert.setPosterImgUrl(dto.getPoster());
+			concert.setBookingUrl(currentBookingUrl);
+			concert.setPerformanceStartDate(startDate);
+			concert.setPerformanceEndDate(endDate);
+
 			concertRepository.save(concert);
 			log.info("업데이트 완료: {}", dto.getPrfnm());
 		}
@@ -160,16 +140,25 @@ public class ConcertService {
 			// 새로 생성
 			Concert newConcert = Concert.builder()
 				.concertName(dto.getPrfnm())
-				.genres(genreList)
 				.posterImgUrl(dto.getPoster())
 				.performanceStartDate(LocalDate.parse(dto.getPrfpdfrom().replace(".", "-")))
 				.performanceEndDate(LocalDate.parse(dto.getPrfpdto().replace(".", "-")))
 				.bookingUrl(dto.getRelates() != null ? dto.getRelates().getFirstUrl() : null)
-				.casts(castList)
+				.casts(new ArrayList<>())
 				.build();
 			concertRepository.save(newConcert);
 			log.info("신규 저장 완료: {}", dto.getPrfnm());
 		}
+	}
+
+	// 데이터 변경이 있는지 감지
+	private boolean isDataNotChanged(Concert concert, KopisDetailResponse.KopisDetailDto dto, LocalDate startDate,
+			LocalDate endDate, String bookingUrl) {
+		return Objects.equals(concert.getConcertName(), dto.getPrfnm())
+				&& Objects.equals(concert.getPosterImgUrl(), dto.getPoster())
+				&& Objects.equals(concert.getPerformanceStartDate(), startDate)
+				&& Objects.equals(concert.getPerformanceEndDate(), endDate)
+				&& Objects.equals(concert.getBookingUrl(), bookingUrl);
 	}
 
 }
