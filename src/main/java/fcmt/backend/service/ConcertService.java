@@ -122,9 +122,6 @@ public class ConcertService {
 		LocalDate endDate = LocalDate.parse(dto.getPrfpdto().replace(".", "-"));
 		String currentBookingUrl = dto.getRelates() != null ? dto.getRelates().getFirstUrl() : null;
 
-		// Genre 리스트 생성
-		List<String> genreList = new ArrayList<>(List.of(dto.getGenrenm().split(", ")));
-
 		if (existingConcert.isPresent()) {
 			Concert concert = existingConcert.get();
 			// 변경을 감지하고, 주요 정보가 전날과 다를 때만 업데이트 수행
@@ -132,7 +129,6 @@ public class ConcertService {
 				return;
 			}
 
-			concert.setGenres(genreList);
 			concert.setPosterImgUrl(dto.getPoster());
 			concert.setBookingUrl(currentBookingUrl);
 			concert.setPerformanceStartDate(startDate);
@@ -145,7 +141,6 @@ public class ConcertService {
 			// 새로 생성
 			Concert newConcert = Concert.builder()
 				.concertName(dto.getPrfnm())
-				.genres(genreList)
 				.posterImgUrl(dto.getPoster())
 				.performanceStartDate(LocalDate.parse(dto.getPrfpdfrom().replace(".", "-")))
 				.performanceEndDate(LocalDate.parse(dto.getPrfpdto().replace(".", "-")))
