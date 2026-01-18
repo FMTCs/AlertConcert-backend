@@ -9,9 +9,8 @@ import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
-import java.util.List;
-import java.util.Map;
 import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Getter
@@ -34,9 +33,10 @@ public class Concert {
 	@Column(name = "genres", columnDefinition = "text[]", nullable = false)
 	private List<String> genres;
 
+	@Builder.Default
 	@JdbcTypeCode(SqlTypes.JSON)
 	@Column(name = "casts", columnDefinition = "jsonb")
-	private List<Map<String, Object>> casts = new ArrayList<>();
+	private List<Long> casts = new ArrayList<>();
 
 	@Column(name = "performance_start_date")
 	private LocalDate performanceStartDate;
