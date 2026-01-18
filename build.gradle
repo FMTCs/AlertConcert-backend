@@ -35,6 +35,7 @@ repositories {
 }
 
 dependencies {
+	implementation platform("org.springframework.ai:spring-ai-bom:1.0.0")
 	implementation 'org.springframework.boot:spring-boot-starter-data-redis-reactive'
 	implementation 'org.springframework.boot:spring-boot-starter-restclient'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
@@ -62,6 +63,9 @@ dependencies {
 	testCompileOnly 'org.projectlombok:lombok'
 	testAnnotationProcessor 'org.projectlombok:lombok'
 	implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-xml'
+	implementation 'org.springframework.ai:spring-ai-starter-model-openai'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework:spring-web'
 }
 
 tasks.named('test') {
