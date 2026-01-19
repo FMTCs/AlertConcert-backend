@@ -28,7 +28,7 @@ public class ConcertService {
 
 	private final ConcertRepository concertRepository;
 
-//	private final ArtistService artistService;
+	// private final ArtistService artistService;
 
 	private final AiClient aiClient;
 
@@ -46,10 +46,10 @@ public class ConcertService {
 
 		// 2. AI 출연진 정보 업데이트 (이후에 구현할 메서드)
 		// updateCastsWithAI();
-//		List<Map<String, String>> spotifyArtistIds = new ArrayList<>();
+		// List<Map<String, String>> spotifyArtistIds = new ArrayList<>();
 		// 3, 해당 출연진 정보를 받아서 장르 추출 및 artists 테이블 채우기
-//		List<Long> artistIds = artistService.addAndGetArtistIds(spotifyArtistIds);
-		log.info(">>> 해당 출연진의 id 총 개수는 {}입니다.", artistIds.size());
+		// List<Long> artistIds = artistService.addAndGetArtistIds(spotifyArtistIds);
+		// log.info(">>> 해당 출연진의 id 총 개수는 {}입니다.", artistIds.size());
 	}
 
 	//

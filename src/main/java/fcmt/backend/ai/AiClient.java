@@ -22,6 +22,7 @@ public class AiClient {
 
 	// 1단계: 공연 정보를 바탕으로 아티스트 이름 리스트 추출
 	// TODO: 포스터는 이미지가지고 넣어서 뭐 어찌저찌 하자고 했던거같은데.. 일단 그건 나중에..
+	// TODO: Media 객체를 활용해 멀티모달 프롬프트를 구성해야..한다고 함
 	public List<String> fetchArtistList(String concertName, String posterUrl) {
 		ListOutputConverter outputConverter = new ListOutputConverter(new DefaultConversionService());
 		String format = outputConverter.getFormat();
