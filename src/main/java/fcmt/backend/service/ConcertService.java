@@ -44,61 +44,65 @@ public class ConcertService {
 	}
 
 	public void syncKopisData() {
-		// 날짜 계산: 오늘 ~ 1년
 		LocalDate now = LocalDate.now();
 		LocalDate oneYearLater = now.plusYears(1);
 
-		// KOPIS 형식(yyyyMMdd)으로
 		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
 		String stdate = now.format(formatter);
 		String eddate = oneYearLater.format(formatter);
 
-		// TODO: 몇 개의 공연 정보를 들고 올 지 결정 필요.
-		int cpage = 1;
-		int rows = 100;
-		boolean hasMoreData = true;
+		// 1. 대상 장르 코드 리스트 정의 (CCCD: 대중음악 -> CCCA: 서양음악(클래식) -> CCCC: 국악)
+		List<String> genreCodes = List.of("CCCD", "CCCA", "CCCC"); // GGGA: 뮤지컬 필요한가?
 
 		log.info("수집 기간: {} ~ {}", stdate, eddate);
 
-		while (hasMoreData) {
-			String listUrl = String.format(
-					"http://www.kopis.or.kr/openApi/restful/pblprfr?service=%s&stdate=%s&eddate=%s&cpage=%d&rows=%d",
-					serviceKey, stdate, eddate, cpage, rows);
+		for (String genreCode : genreCodes) {
+			log.info("장르 코드 [{}] 수집 시작", genreCode);
+			int cpage = 1;
+			int rows = 100;
+			boolean hasMoreData = true;
 
-			KopisListResponse listResponse = restTemplate.getForObject(listUrl, KopisListResponse.class);
+			while (hasMoreData) {
+				// 2. URL에 shcate 파라미터 추가
+				String listUrl = String.format(
+						"http://www.kopis.or.kr/openApi/restful/pblprfr?service=%s&stdate=%s&eddate=%s&cpage=%d&rows=%d&shcate=%s",
+						serviceKey, stdate, eddate, cpage, rows, genreCode);
 
-			if (listResponse != null && listResponse.getConcertList() != null) {
-				for (KopisListResponse.KopisListDto listDto : listResponse.getConcertList()) {
-					try {
-						fetchAndSaveDetail(listDto.getMt20id());
-						// 0.2초 대기 (1초에 최대 약 5번 요청하게 됨)
-						Thread.sleep(200);
+				KopisListResponse listResponse = restTemplate.getForObject(listUrl, KopisListResponse.class);
 
+				if (listResponse != null && listResponse.getConcertList() != null) {
+					for (KopisListResponse.KopisListDto listDto : listResponse.getConcertList()) {
+						try {
+							fetchAndSaveDetail(listDto.getMt20id());
+							Thread.sleep(300);
+						}
+						catch (InterruptedException e) {
+							log.error("작업 중 인터럽트 발생: {}", e.getMessage());
+							Thread.currentThread().interrupt();
+							return; // 전체 종료
+						}
+						catch (Exception e) {
+							log.error("상세 정보 저장 실패 (ID: {}): {}", listDto.getMt20id(), e.getMessage());
+						}
 					}
-					catch (InterruptedException e) {
-						log.error("작업 중 인터럽트 발생: {}", e.getMessage());
-						Thread.currentThread().interrupt(); // 상태 복구
+					cpage++;
+
+					// 테스트용 제한
+					if (cpage > 3)
 						break;
-					}
-					catch (Exception e) {
-						log.error("상세 정보 저장 실패 (ID: {}): {}", listDto.getMt20id(), e.getMessage());
-					}
 				}
-				cpage++;
-				// TODO: 테스트를 위해서 300개로 제한. 실제로 돌릴 땐 제거하면 됨.
-				if (cpage > 3)
-					break;
-			}
-			else {
-				// 더 이상 가져올 데이터가 없으면 루프 종료
-				log.info("모든 데이터 수집 완료. 마지막 페이지: {}", cpage - 1);
-				hasMoreData = false;
-			}
-			// API 서버 부하 방지를 위해 페이지 전환 사이에도 잠깐 쉬어주기
-			try {
-				Thread.sleep(500);
-			}
-			catch (InterruptedException ignored) {
+				else {
+					log.info("장르 [{}] 수집 완료. 마지막 페이지: {}", genreCode, cpage - 1);
+					hasMoreData = false;
+				}
+
+				try {
+					// API 서버 부하 방지를 위해 페이지 전환 사이에도 잠깐 쉬어주기
+
+					Thread.sleep(500);
+				}
+				catch (InterruptedException ignored) {
+				}
 			}
 		}
 	}
