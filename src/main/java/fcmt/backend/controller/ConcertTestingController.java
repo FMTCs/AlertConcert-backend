@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -36,17 +37,17 @@ public class ConcertTestingController {
 
 	@GetMapping("/ai-test")
 	public ResponseEntity<?> testAi(@RequestParam String concertName) {
-		// 2. 주입된 aiClient를 그대로 사용합니다.
 		var artists = aiClient.fetchArtistList(concertName,
-				"http://www.kopis.or.kr/upload/pfmPoster/PF_PF283372_260116_155717.gif");
+				"https://image.stagepick.co.kr/performance/208744_118d6.webp");
 
-		AiClient.ArtistIdRecord artistId = null;
+		List<AiClient.ArtistIdRecord> spotifyDetails = List.of();
+
 		if (artists != null && !artists.isEmpty()) {
-			artistId = aiClient.fetchSpotifyIdByArtistName(artists.getFirst());
+			spotifyDetails = aiClient.fetchSpotifyIdByArtistName(concertName, artists);
 		}
 
-		return ResponseEntity.ok(Map.of("artistList", artists != null ? artists : "검색 결과 없음", "spotifyIdCheck",
-				artistId != null ? artistId : "ID 찾지 못함"));
+		return ResponseEntity.ok(Map.of("artistList", artists != null ? artists : "검색 결과 없음", "spotifyDetails",
+				spotifyDetails.isEmpty() ? "ID 찾지 못함" : spotifyDetails));
 	}
 
 }
