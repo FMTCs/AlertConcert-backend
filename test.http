@@ -1,0 +1,2 @@
+GET {{server}}/api/test/ai-test?concertName=MUSIC ENCOUNTER+-+수원
+Authorization: Bearer {{accessToken}}
