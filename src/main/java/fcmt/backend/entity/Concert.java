@@ -34,6 +34,7 @@ public class Concert {
 	@Column(name = "genres", columnDefinition = "text[]", nullable = false)
 	private List<String> genres;
 
+	@Builder.Default
 	@JdbcTypeCode(SqlTypes.JSON)
 	@Column(name = "casts", columnDefinition = "jsonb")
 	private List<Map<String, Object>> casts = new ArrayList<>();
