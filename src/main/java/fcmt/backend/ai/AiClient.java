@@ -25,7 +25,13 @@ public class AiClient {
 	private Resource genresResource;
 
 	// 1. ChatClient.Builder를 주입받아 기본 시스템 설정을 입힙니다.
-	public AiClient(ChatClient.Builder builder) {
+	public AiClient(ChatClient.Builder builder,
+					@Value("${spring.ai.openai.chat.model}")
+					String model,
+	@Value("${spring.ai.openai.base-url}")
+	String baseUrl) {
+		log.info("🔥 AI model = {}", model);
+		log.info("🔥 AI baseUrl = {}", baseUrl);
 		this.chatClient = builder.defaultSystem("""
 				당신은 한국에서 열리는 음악 콘서트를 대상으로 아티스트 데이터를 추출하는 AI 에이전트입니다.
 				[절대 규칙]
@@ -33,13 +39,15 @@ public class AiClient {
 				2. 인용 금지: [1], [2] 와 같은 표기를 포함하지 마세요.
 				3. 그룹 처리: 밴드나 그룹은 단일 엔티티로 처리하세요.
 				4. 환각 방지: 확실하지 않으면 빈 값을 반환하세요.
-				""").build();
+				""").defaultOptions(org.springframework.ai.openai.OpenAiChatOptions.builder()
+				.model("sonar")
+				.build()).build();
 	}
 
 	// 1단계: 아티스트 이름 리스트 추출
 	public List<String> fetchArtistList(String concertName, String posterUrl) {
 		try {
-			return chatClient.prompt()
+			var response = chatClient.prompt()
 				.user(u -> u.text("""
 						[입력 데이터]
 						콘서트명: {concertName}
@@ -48,10 +56,13 @@ public class AiClient {
 						[임무]
 						입력된 정보에서 공연의 '메인 아티스트(가수/그룹)' 이름을 리스트로 추출하세요.
 						""").param("concertName", concertName).param("posterUrl", posterUrl))
-				.call()
-				.entity(new ParameterizedTypeReference<List<String>>() {
-				});
+				.call();
+			String raw = response.content();
+			log.info("🔥 AI RAW RESPONSE = {}", raw);
+
 			// 2.0의 .entity()는 마크다운 제거 및 JSON 파싱을 자동으로 수행합니다.
+			return response.entity(new ParameterizedTypeReference<List<String>>() {
+			});
 		}
 		catch (Exception e) {
 			log.error("가수 리스트 추출 실패: {}", e.getMessage());

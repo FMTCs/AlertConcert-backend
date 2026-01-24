@@ -12,3 +12,10 @@ spring:
       hibernate:
         ddl-auto: validate   # 처음엔 validate or update
       show-sql: true
+
+    ai:
+      openai:
+        base-url: https://api.perplexity.ai
+        chat:
+          options:
+            model: sonar
