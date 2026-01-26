@@ -29,11 +29,11 @@
 
 ### Frontend
 
-| 구분 | 목록 |
-| :---: | :---: |
+| 구분 |                                                              목록                                                              |
+| :---: |:----------------------------------------------------------------------------------------------------------------------------:|
 | **Language** | ![JavaScript](https://img.shields.io/badge/javascript-%23323330.svg?style=for-the-badge&logo=javascript&logoColor=%23F7DF1E) |
-| **Framework** | ![React](https://img.shields.io/badge/react-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB) |
-| **Others** |  ![axios](https://img.shields.io/badge/axios-DB5C3F?style=for-the-badge&logo=axios&logoColor=white) |
+| **Framework** |        ![React](https://img.shields.io/badge/react-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB)         |
+| **Others** |              ![axios](https://img.shields.io/badge/axios-DB5C3F?style=for-the-badge&logo=axios&logoColor=white)              |
 
 ### Backend
 
@@ -63,6 +63,10 @@
 ![Copy of Untitled Diagram.svg](readme_image/erd.svg)
 # 5. 주요 기능
 ### 회원가입
+![image.png](readme_image/register.png)
+![image.png](readme_image/register2.png)
 ### 로그인
-### 관심사 갱신
+![image.png](readme_image/login.png)
 ### 관심 공연 보기
+![image.png](readme_image/main.png)
+![image.png](readme_image/main2.png)
