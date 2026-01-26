@@ -33,7 +33,7 @@
 | :---: | :---: |
 | **Language** | ![JavaScript](https://img.shields.io/badge/javascript-%23323330.svg?style=for-the-badge&logo=javascript&logoColor=%23F7DF1E) |
 | **Framework** | ![React](https://img.shields.io/badge/react-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB) |
-| **Others** |  ![axios](https://img.shields.io/badge/axios-DB5C3F?style=flat-square&logo=axios&logoColor=white) |
+| **Others** |  ![axios](https://img.shields.io/badge/axios-DB5C3F?style=for-the-badge-square&logo=axios&logoColor=white) |
 
 ### Backend
 
