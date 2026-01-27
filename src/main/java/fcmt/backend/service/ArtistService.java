@@ -34,7 +34,7 @@ public class ArtistService {
 			String artistName = artistInfo.get("artist_name");
 
 			// 1. Artists 테이블 탐색
-			Optional<Artist> artistEntity = artistRepository.findByspotifyArtistId(spotifyArtistId);
+			Optional<Artist> artistEntity = artistRepository.findBySpotifyArtistId(spotifyArtistId);
 
 			// 2. 존재 여부 확인
 			if (artistEntity.isPresent()) {
