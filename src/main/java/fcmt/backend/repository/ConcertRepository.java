@@ -14,10 +14,16 @@ public interface ConcertRepository extends JpaRepository<Concert, Long> {
 
 	Optional<Concert> findByConcertName(String concertName); // 콘서트 중복 저장 방지를 위해
 
-	@Query(value = "SELECT * FROM concerts c " + "WHERE c.genres && CAST(:preferredGenres AS text[]) "
-			+ "OR EXISTS (SELECT 1 FROM jsonb_array_elements(c.casts) as cast_obj "
-			+ "WHERE cast_obj->>'id' = ANY(CAST(:artistIds AS text[])))", nativeQuery = true)
-	List<Concert> findByGenresIn(@Param("preferredGenres") String[] preferredGenres,
-			@Param("artistIds") String[] artistIds);
+	@Query(value = """
+			SELECT DISTINCT c.* FROM concerts c
+			JOIN artists a ON a.artist_id = ANY(c.casts)
+			WHERE (EXISTS (
+			        SELECT 1 FROM unnest(c.casts) AS cast_id
+			        WHERE cast_id = ANY(CAST(:preferredArtistIds AS bigint[]))
+			      ))
+			   OR (a.genres && CAST(:preferredGenres AS text[]))
+			""", nativeQuery = true)
+	List<Concert> findRecommendedConcerts(@Param("preferredArtistIds") Long[] preferredArtistIds,
+			@Param("preferredGenres") String[] preferredGenres);
 
 }
