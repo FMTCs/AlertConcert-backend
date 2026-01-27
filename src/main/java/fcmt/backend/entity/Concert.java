@@ -9,6 +9,7 @@ import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -28,9 +29,10 @@ public class Concert {
 	@Column(name = "concert_name", nullable = false)
 	private String concertName;
 
+	@Builder.Default
 	@JdbcTypeCode(SqlTypes.ARRAY)
 	@Column(name = "casts", columnDefinition = "bigint[]")
-	private List<Long> casts;
+	private List<Long> casts = new ArrayList<>();
 
 	@Column(name = "performance_start_date")
 	private LocalDate performanceStartDate;

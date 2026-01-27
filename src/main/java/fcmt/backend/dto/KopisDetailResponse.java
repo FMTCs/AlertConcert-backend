@@ -22,15 +22,11 @@ public class KopisDetailResponse {
 
 		private String prfnm; // 공연명
 
-		private String genrenm; // 장르
-
 		private String prfpdfrom; // 공연시작일
 
 		private String prfpdto; // 공연종료일
 
 		private String poster; // 포스터URL
-
-		private String prfcast; // 출연진 정보 (예: "가수1, 가수2, ..." 또는 "공연자 없음")
 
 		@JacksonXmlProperty(localName = "relates")
 		private Relates relates; // relatenm 예매처명1 / relateurl 예매처URL1
