@@ -35,33 +35,24 @@ repositories {
 }
 
 dependencies {
-	implementation 'org.springframework.boot:spring-boot-starter-data-redis-reactive'
-	implementation 'org.springframework.boot:spring-boot-starter-restclient'
-	implementation 'org.springframework.boot:spring-boot-starter-security'
-	implementation 'org.springframework.boot:spring-boot-starter-security-oauth2-authorization-server'
-	implementation 'org.springframework.boot:spring-boot-starter-security-oauth2-client'
-	implementation 'org.springframework.boot:spring-boot-starter-security-oauth2-resource-server'
-	implementation 'org.springframework.boot:spring-boot-starter-webclient'
-	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
-	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-	compileOnly 'org.projectlombok:lombok'
-	runtimeOnly 'org.postgresql:postgresql'
-	annotationProcessor 'org.projectlombok:lombok'
-	implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
-	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
-	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
-	testImplementation 'org.springframework.boot:spring-boot-starter-data-redis-reactive-test'
-	testImplementation 'org.springframework.boot:spring-boot-starter-restclient-test'
-	testImplementation 'org.springframework.boot:spring-boot-starter-security-oauth2-authorization-server-test'
-	testImplementation 'org.springframework.boot:spring-boot-starter-security-oauth2-client-test'
-	testImplementation 'org.springframework.boot:spring-boot-starter-security-oauth2-resource-server-test'
-	testImplementation 'org.springframework.boot:spring-boot-starter-security-test'
-	testImplementation 'org.springframework.boot:spring-boot-starter-webclient-test'
-	testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
-	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-	testCompileOnly 'org.projectlombok:lombok'
-	testAnnotationProcessor 'org.projectlombok:lombok'
-	implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-xml'
+	implementation platform("org.springframework.ai:spring-ai-bom:2.0.0-SNAPSHOT")
+
+	implementation "org.springframework.boot:spring-boot-starter-web"
+	implementation "org.springframework.boot:spring-boot-starter-security"
+	implementation "org.springframework.boot:spring-boot-starter-data-jpa"
+	implementation "org.springframework.boot:spring-boot-starter-data-redis-reactive"
+	implementation "org.springframework.ai:spring-ai-starter-model-openai"
+//	implementation "org.springframework.ai:spring-ai-openai-spring-boot-starter"
+	implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-xml"
+	implementation "io.jsonwebtoken:jjwt-api:0.11.5"
+	runtimeOnly "io.jsonwebtoken:jjwt-impl:0.11.5"
+	runtimeOnly "io.jsonwebtoken:jjwt-jackson:0.11.5"
+
+	runtimeOnly "org.postgresql:postgresql"
+//	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	compileOnly "org.projectlombok:lombok"
+	annotationProcessor "org.projectlombok:lombok"
 }
 
 tasks.named('test') {

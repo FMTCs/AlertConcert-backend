@@ -1,0 +1,49 @@
+@server = http://localhost:8080
+@json = application/json
+@accessToken = eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJoNHZydXQ0IiwidWlkIjoxLCJ0eXBlIjoiQUNDRVNTIiwiaWF0IjoxNzY4ODA1OTYwLCJleHAiOjE3Njg4MDY4NjB9.qVSPda-i033SNdsyCN3TIF-gOBZpyPL5i25uUJTM1fs
+@refreshToken = eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ0ZXN0dXNlcjIiLCJ1aWQiOjYsInR5cGUiOiJSRUZSRVNIIiwiaWF0IjoxNzY4MjMyNzI1LCJleHAiOjE3Njk0NDIzMjV9.rTokMpr0y0WbdbJ2K4TKJl89Gemmy6ECYh8b8vbUn58
+
+########################################
+### 1️⃣ 회원가입 (permitAll)
+########################################
+POST {{server}}/auth/register
+Content-Type: {{json}}
+
+{
+  "username": "h4vrut4",
+  "password": "H$VRUT$",
+  "signupToken": "valid"
+}
+
+########################################
+### 2️⃣ 로그인 (permitAll)
+### → accessToken 반환
+########################################
+POST {{server}}/auth/login
+Content-Type: {{json}}
+
+{
+  "username": "h4vrut4",
+  "password": "H$VRUT$"
+}
+
+########################################
+### 3️⃣ KOPIS 데이터 수집 실행 (Access Token 포함)
+########################################
+GET {{server}}/api/test/run-kopis
+Authorization: Bearer {{accessToken}}
+
+########################################
+### 4️⃣ AI 기능 테스트 (Access Token 포함)
+### → 출연진 리스트 추출 및 첫 번째 가수의 Spotify ID 조회
+########################################
+GET {{server}}/api/test/ai-test?concertName=현대카드+Super+Match+임영웅
+Authorization: Bearer {{accessToken}}
+
+### 다른 공연 예시 (아이브)
+GET {{server}}/api/test/ai-test?concertName=IVE+THE+1ST+WORLD+TOUR+SHOW+WHAT+I+HAVE
+Authorization: Bearer {{accessToken}}
+
+### 다른 공연 예시 (아이브)
+GET {{server}}/api/test/ai-test?concertName=MUSIC ENCOUNTER+-+수원
+Authorization: Bearer {{accessToken}}
