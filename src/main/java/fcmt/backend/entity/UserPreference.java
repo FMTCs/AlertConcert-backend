@@ -6,7 +6,7 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 import java.time.OffsetDateTime;
-import java.util.Map;
+import java.util.List;
 
 @Entity
 @Getter
@@ -26,11 +26,11 @@ public class UserPreference {
 	@JoinColumn(name = "uid")
 	private User user;
 
-	@JdbcTypeCode(SqlTypes.JSON)
-	@Column(name = "preference", columnDefinition = "jsonb", nullable = false)
-	private Map<String, Object> preference;
+	@JdbcTypeCode(SqlTypes.ARRAY)
+	@Column(name = "artist_ids", columnDefinition = "bigint[]", nullable = false)
+	private List<Long> artistIds;
 
-	@Column(name = "updated_at", nullable = false, insertable = false, updatable = false)
+	@Column(name = "updated_at", nullable = false)
 	private OffsetDateTime updatedAt;
 
 }

@@ -8,25 +8,27 @@ import org.hibernate.type.SqlTypes;
 import java.util.List;
 
 @Entity
-@Builder
 @Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Setter
+@Builder
+@NoArgsConstructor
 @AllArgsConstructor
+@Table(name = "artists")
 public class Artist {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	@Column(name = "artist_id")
+	@Column(name = "artist_id", nullable = false)
 	private Long artistId;
 
-	@Column(name = "artist_name")
-	private String artistName;
-
-	@Column(name = "spotify_artist_id")
+	@Column(name = "spotify_artist_id", nullable = false)
 	private String spotifyArtistId;
 
 	@JdbcTypeCode(SqlTypes.ARRAY)
 	@Column(name = "genres", columnDefinition = "text[]", nullable = false)
 	private List<String> genres;
+
+	@Column(name = "artist_name", nullable = false)
+	private String artistName;
 
 }

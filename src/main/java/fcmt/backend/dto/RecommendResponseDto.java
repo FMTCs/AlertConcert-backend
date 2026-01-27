@@ -3,7 +3,6 @@ package fcmt.backend.dto;
 import lombok.*;
 
 import java.util.List;
-import java.util.Map;
 
 @Getter
 @Builder
@@ -39,7 +38,7 @@ public class RecommendResponseDto {
 
 		private String concertName;
 
-		private List<Map<String, Object>> casts;
+		private List<String> casts;
 
 		private List<String> genres;
 
