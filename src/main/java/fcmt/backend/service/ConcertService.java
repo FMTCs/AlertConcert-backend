@@ -170,7 +170,8 @@ public class ConcertService {
 	//
 	// 2. AI 출연진 정보 업데이트
 	//
-	private void updateCastsWithAI() {}
+	private void updateCastsWithAI() {
+	}
 
 	// 데이터 변경이 있는지 감지
 	private boolean isDataNotChanged(Concert concert, KopisDetailResponse.KopisDetailDto dto, LocalDate startDate,
