@@ -33,7 +33,6 @@
 | :---: |:----------------------------------------------------------------------------------------------------------------------------:|
 | **Language** | ![JavaScript](https://img.shields.io/badge/javascript-%23323330.svg?style=for-the-badge&logo=javascript&logoColor=%23F7DF1E) |
 | **Framework** |        ![React](https://img.shields.io/badge/react-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB)         |
-| **Others** |              ![axios](https://img.shields.io/badge/axios-DB5C3F?style=for-the-badge&logo=axios&logoColor=white)              |
 
 ### Backend
 
@@ -50,7 +49,7 @@
 | :---: | :---: |
 | **Spotify** | ![Spotify](https://img.shields.io/badge/Spotify-1ED760?style=for-the-badge&logo=spotify&logoColor=white) |
 | **Kopis** | <img src="https://img.shields.io/badge/KOPIS-ff4646?style=for-the-badge&logo=KOPIS&logoColor=white/"> |
-
+ | **AI** | ![Perplexity](https://img.shields.io/badge/perplexity-000000?style=for-the-badge&logo=perplexity&logoColor=088F8F) |
 ### Tools
 
 | 구분 | 목록 |
