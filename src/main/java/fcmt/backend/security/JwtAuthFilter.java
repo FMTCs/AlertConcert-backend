@@ -21,7 +21,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
 	private final JwtTokenProvider jwtTokenProvider;
 
-	private static final List<String> PERMIT_URLS = List.of("/auth/login", "/auth/register");
+	private static final List<String> PERMIT_URLS = List.of("/auth/login", "/auth/register", "/auth/spotifyOAuth2",
+			"/login/oauth2/code/spotify");
 
 	private boolean isPermitUri(String uri) {
 		return PERMIT_URLS.stream().anyMatch(uri::startsWith);
@@ -32,6 +33,9 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 			throws IOException, ServletException {
 
 		String requestUri = request.getRequestURI();
+
+		System.out.println("현재 요청 URI: " + requestUri); // 이 로그가 핵심입니다!
+		System.out.println("허용 여부: " + isPermitUri(requestUri));
 
 		// 1. 인증이 필요 없는 white list의 경우
 		if (isPermitUri(requestUri)) {
