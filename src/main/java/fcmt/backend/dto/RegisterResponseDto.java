@@ -1,3 +1,4 @@
+// [TODO] 미사용 파일 삭제 필요 - ResponseDto 일괄 처리 및 통합 이후
 package fcmt.backend.dto;
 
 import lombok.AllArgsConstructor;

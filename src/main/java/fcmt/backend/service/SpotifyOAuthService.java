@@ -25,7 +25,7 @@ public class SpotifyOAuthService {
 
 	private final RestTemplate restTemplate = new RestTemplate();
 
-	public String getAccessToken(String code) {
+	public SpotifyTokenResponseDto getTokens(String code) {
 		String tokenUrl = "https://accounts.spotify.com/api/token";
 
 		// 헤더 설정 (Content-Type: application/x-www-form-urlencoded)
@@ -45,11 +45,14 @@ public class SpotifyOAuthService {
 		ResponseEntity<SpotifyTokenResponseDto> response = restTemplate.postForEntity(tokenUrl, request,
 				SpotifyTokenResponseDto.class);
 
-		if (response.getBody() == null) {
+		SpotifyTokenResponseDto tokenResponse = response.getBody();
+
+		if (tokenResponse == null || tokenResponse.getAccessToken() == null
+				|| tokenResponse.getRefreshToken() == null) {
 			throw new RuntimeException("SpotifyAuthorize Error!");
 		}
 
-		return response.getBody().getAccessToken();
+		return tokenResponse;
 	}
 
 	public SpotifyUserDto getSpotifyUserInfo(String accessToken) {

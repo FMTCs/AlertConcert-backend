@@ -4,12 +4,15 @@ import fcmt.backend.dto.*;
 import fcmt.backend.exception.custom.DuplicateUserException;
 import fcmt.backend.exception.custom.TokenInvalidException;
 import fcmt.backend.repository.SessionTokenRepository;
+import fcmt.backend.repository.SignupTokenRepository;
 import fcmt.backend.security.JwtTokenProvider;
 import fcmt.backend.security.SessionTokenConfig;
 import io.jsonwebtoken.Claims;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -17,6 +20,8 @@ import fcmt.backend.entity.User;
 import fcmt.backend.repository.UserRepository;
 import fcmt.backend.exception.custom.UserNotFoundException;
 import fcmt.backend.exception.custom.InvalidPasswordException;
+
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -28,6 +33,8 @@ public class AuthService {
 	private final JwtTokenProvider jwtTokenProvider;
 
 	private final SessionTokenRepository sessionTokenRepository;
+
+	private final SignupTokenRepository signupTokenRepository;
 
 	private final PasswordEncoder passwordEncoder;
 
@@ -52,7 +59,7 @@ public class AuthService {
 	}
 
 	@Transactional // 원자성 보장을 위해서 추가
-	public RegisterResponseDto register(RegisterRequestDto request) {
+	public ResponseEntity<?> register(RegisterRequestDto request) {
 
 		// 1. username 중복 검사
 		validateDuplicateUsername(request.getUsername());
@@ -62,26 +69,31 @@ public class AuthService {
 		// 아닐까?
 		String encodedPassword = passwordEncoder.encode(request.getPassword());
 
-		// 3. [TODO] signupToken 가져오기 + spotifyUserId 검증부
-		String signupToken = request.getSignupToken();
-		if (!signupToken.equals("valid")) {
-			log.error("signupToken 오류 - 일단 pass");
-			// 임시 response 처리
-			return RegisterResponseDto.fail();
-		}
-		String spotifyUserId = "temp_" + request.getUsername();
-		;
+		// 3. Redis의 signupToken을 가지고 있을 때, User table에 채울 정보 가져오기
+		Map<Object, Object> registerDatas = signupTokenRepository.find(request.getSignupToken());
 
-		// 4. User entity 생성
+		// 4. Redis에서 토큰이 없다면 유효하지 않다면 에러 처리 [TODO] : 토큰 invalid 처리 중복 해결 + 에러 메세지 수정
+		if (registerDatas == null || registerDatas.isEmpty()) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("인증 세션이 만료되었습니다. Spotify 인증을 다시 진행해주세요.");
+		}
+
+		// 5. spotifyRefreshToken 및 spotifyUserId 가져오기 [TODO] RefreshToken 암호화하기
+		String spotifyRefreshToken = (String) registerDatas.get("spotifyRefreshToken");
+		String spotifyUserId = (String) registerDatas.get("spotifyUserId");
+
+		// 6. User entity 생성
 		User user = User.builder()
 			.username(request.getUsername())
 			.password(encodedPassword)
 			.spotifyUserId(spotifyUserId)
+			.spotifyRefreshTokenEnc(spotifyRefreshToken) // [TODO] RefreshToken 암호화하기
+			.valid(true)
 			.build();
 
-		// 5. DB에 저장
+		// 7. DB에 저장
 		userRepository.save(user);
-		return RegisterResponseDto.success();
+		// [TODO] 처리 메세지 정리
+		return ResponseEntity.ok("Register Success!");
 	}
 
 	public RefreshResponseDto refresh(String token) {

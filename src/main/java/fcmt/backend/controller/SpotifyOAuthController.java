@@ -1,9 +1,12 @@
 package fcmt.backend.controller;
 
+import fcmt.backend.dto.SpotifyTokenResponseDto;
 import fcmt.backend.dto.SpotifyUserDto;
+import fcmt.backend.repository.SignupTokenRepository;
 import fcmt.backend.security.JwtTokenProvider;
 import fcmt.backend.service.SpotifyOAuthService;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -15,16 +18,14 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
 @RestController
+@RequiredArgsConstructor
 public class SpotifyOAuthController {
 
 	private final JwtTokenProvider jwtTokenProvider;
 
-	private final SpotifyOAuthService spotifyOAuthService;
+	private final SignupTokenRepository signupTokenRepository;
 
-	public SpotifyOAuthController(JwtTokenProvider jwtTokenProvider, SpotifyOAuthService spotifyOAuthService) {
-		this.jwtTokenProvider = jwtTokenProvider;
-		this.spotifyOAuthService = spotifyOAuthService;
-	}
+	private final SpotifyOAuthService spotifyOAuthService;
 
 	@Value("${spotify.api.client-id}")
 	private String clientId;
@@ -40,8 +41,10 @@ public class SpotifyOAuthController {
 	public void redirectToSpotify(HttpServletResponse response) throws IOException {
 		String spotifyOAuthUrl = "https://accounts.spotify.com/authorize" + "?client_id=" + clientId
 				+ "&response_type=code" + "&redirect_uri=" + URLEncoder.encode(redirectUri, StandardCharsets.UTF_8)
-				+ "&scope=" + URLEncoder.encode("user-read-private user-read-email", StandardCharsets.UTF_8);
-		System.out.println("test중 : " + spotifyOAuthUrl);
+				+ "&scope=" + URLEncoder.encode("user-read-private user-read-email", StandardCharsets.UTF_8)
+				+ "&show_dialog=true";
+
+		// spotify 인증 주소로 redirect
 		response.sendRedirect(spotifyOAuthUrl);
 	}
 
@@ -49,23 +52,23 @@ public class SpotifyOAuthController {
 	@GetMapping("/login/oauth2/code/spotify")
 	public void spotifyCallback(@RequestParam("code") String code, HttpServletResponse response) throws IOException {
 		// 1. Authorization Code로 Access Token 요청
-		String accessToken = spotifyOAuthService.getAccessToken(code);
+		SpotifyTokenResponseDto spotifyTokens = spotifyOAuthService.getTokens(code);
+		String spotifyAccessToken = spotifyTokens.getAccessToken();
+		String spotifyRefreshToken = spotifyTokens.getRefreshToken();
 
 		// 2. Access Token으로 사용자 정보 요청 (/v1/me api call)
-		SpotifyUserDto userInfo = spotifyOAuthService.getSpotifyUserInfo(accessToken);
+		SpotifyUserDto userInfo = spotifyOAuthService.getSpotifyUserInfo(spotifyAccessToken);
+		String spotifyUserId = userInfo.getId();
 
-		// 3. [ToDo] DB 확인 후 회원가입 또는 로그인 처리
+		// 3. 우리 서비스 전용 JWT 토큰 생성 및 반환
+		String signupToken = jwtTokenProvider.createRegisterToken(spotifyUserId);
 
-		// 4. 우리 서비스 전용 JWT 토큰 생성 및 반환
-		String registerToken = jwtTokenProvider.createRegisterToken(userInfo.getEmail());
+		// 4. Redis에 인증 관련 정보 및 확인용 토큰 저장
+		signupTokenRepository.save(signupToken, spotifyUserId, spotifyRefreshToken);
 
-		// 5. [ToDo] JWT 토큰을 Redis에 저장 -> register 시 토큰 확인용
-
-		// 6. 프론트엔드로 리다이렉트 (프론트 주소가 localhost:3000인 경우)
-		// 보안상 중요 데이터는 쿠키나 쿼리 파라미터(짧은 유효기간)로 전달합니다.
-		String targetUrl = UriComponentsBuilder.fromUriString("http://localhost:3000/spotify-callback")
-			.queryParam("token", registerToken)
-			.queryParam("id", userInfo.getId())
+		// 5. 프론트엔드로 리다이렉트
+		String targetUrl = UriComponentsBuilder.fromUriString("http://localhost:3000/signup")
+			.queryParam("signupToken", signupToken)
 			.build()
 			.toUriString();
 
