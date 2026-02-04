@@ -11,6 +11,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import java.util.List;
+
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
@@ -25,8 +27,8 @@ public class SecurityConfig {
 			// 서버가 세션을 저장하지 않는다 ( 정책 )
 			.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 			.authorizeHttpRequests(auth -> auth
-				.requestMatchers("/auth/login", "/auth/register", "/auth/logout", "/api/test/**", "/api/recommend",
-						"/api/interest")
+				.requestMatchers("/auth/login", "/auth/register", "/auth/logout", "/auth/spotifyOAuth2",
+						"/login/oauth2/code/spotify", "/api/test/**", "/api/recommend", "/api/interest")
 				.permitAll()
 				.anyRequest()
 				.authenticated())
@@ -39,7 +41,7 @@ public class SecurityConfig {
 		org.springframework.web.cors.CorsConfiguration configuration = new org.springframework.web.cors.CorsConfiguration();
 
 		// 프론트엔드 주소 허용 (리액트 기본 포트 3000)
-		configuration.addAllowedOrigin("http://localhost:3000");
+		configuration.setAllowedOrigins(List.of("http://localhost:3000", "http://127.0.0.1:3000"));
 
 		configuration.addAllowedMethod("*"); // GET, POST, PUT, DELETE 모두 허용
 		configuration.addAllowedHeader("*"); // 모든 Header 허용

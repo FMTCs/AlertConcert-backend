@@ -45,6 +45,17 @@ public class JwtTokenProvider {
 			.compact();
 	}
 
+	// register 인증용 토큰 생성
+	public String createRegisterToken(String SpotifyUserId) {
+		return Jwts.builder()
+			.setSubject(SpotifyUserId) // 해당 부분에 대해서는 논의 필요 -> 어떤 값들이 들어가는지
+			.claim("type", "SignUpToken")
+			.setIssuedAt(new Date())
+			.setExpiration(new Date(System.currentTimeMillis() + 100000))
+			.signWith(key, SignatureAlgorithm.HS256)
+			.compact();
+	}
+
 	// token 파싱
 	public Claims parseClaims(String token) {
 		return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody();
