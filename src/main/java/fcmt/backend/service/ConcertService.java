@@ -44,7 +44,8 @@ public class ConcertService {
 		syncKopisData();
 
 		// 2. AI 출연진 정보 업데이트 (이후에 구현할 메서드)
-		// updateCastsWithAI();
+		// fetchArtistList()를 업데이트 날짜 보면서 호출해야될거고..
+		// 받은 걸로 api 호출해서 사용해야 할 거고
 		// List<Map<String, String>> spotifyArtistIds = new ArrayList<>();
 		// 3, 해당 출연진 정보를 받아서 장르 추출 및 artists 테이블 채우기
 		// List<Long> artistIds = artistService.addAndGetArtistIds(spotifyArtistIds);

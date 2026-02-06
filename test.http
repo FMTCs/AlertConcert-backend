@@ -1,6 +1,6 @@
 @server = http://localhost:8080
 @json = application/json
-@accessToken = eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJoNHZydXQ0IiwidWlkIjoxLCJ0eXBlIjoiQUNDRVNTIiwiaWF0IjoxNzY4ODA1OTYwLCJleHAiOjE3Njg4MDY4NjB9.qVSPda-i033SNdsyCN3TIF-gOBZpyPL5i25uUJTM1fs
+@accessToken = eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJoNHZydXQ0IiwidWlkIjoxLCJ0eXBlIjoiQUNDRVNTIiwiaWF0IjoxNzcwMzcwNjQ2LCJleHAiOjE3NzAzNzE1NDZ9.Ssx0H_-RvNHr9FLdoIZj3qAiTZpvgRH6F-zR0nXX1ik
 @refreshToken = eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ0ZXN0dXNlcjIiLCJ1aWQiOjYsInR5cGUiOiJSRUZSRVNIIiwiaWF0IjoxNzY4MjMyNzI1LCJleHAiOjE3Njk0NDIzMjV9.rTokMpr0y0WbdbJ2K4TKJl89Gemmy6ECYh8b8vbUn58
 
 ########################################
@@ -44,6 +44,6 @@ Authorization: Bearer {{accessToken}}
 GET {{server}}/api/test/ai-test?concertName=IVE+THE+1ST+WORLD+TOUR+SHOW+WHAT+I+HAVE
 Authorization: Bearer {{accessToken}}
 
-### 다른 공연 예시 (아이브)
-GET {{server}}/api/test/ai-test?concertName=MUSIC ENCOUNTER+-+수원
+### 다른 공연 예시
+GET {{server}}/api/test/ai-test?concertName=ANTARES+PHASE+:+RED
 Authorization: Bearer {{accessToken}}

@@ -32,32 +32,28 @@ public class AiClient {
 		this.chatClient = builder.defaultSystem("""
 				당신은 한국에서 열리는 음악 콘서트를 대상으로 아티스트 데이터를 추출하는 AI 에이전트입니다.
 				[절대 규칙]
-				1. 출력 형식: 반드시 지정된 형식으로만 응답하세요.
-				2. 인용 금지: [1], [2] 와 같은 표기를 포함하지 마세요.
-				3. 그룹 처리: 밴드나 그룹은 단일 엔티티로 처리하세요.
-				4. 환각 방지: 확실하지 않으면 빈 값을 반환하세요.
+				1. 반드시 JSON 리스트 포맷으로만 응답
+				2. [1], [2] 와 같은 인용 표기 제외
+				3. 밴드나 그룹은 단일 엔티티로 처리
 				""")
 			.defaultOptions(org.springframework.ai.openai.OpenAiChatOptions.builder().model("sonar").build())
 			.build();
 	}
 
 	// 1단계: 아티스트 이름 리스트 추출
-	public List<String> fetchArtistList(String concertName, String posterUrl) {
+	public List<String> fetchArtistList(String concertName) {
 		try {
-			var response = chatClient.prompt().user(u -> u.text("""
-					[입력 데이터]
-					콘서트명: {concertName}
-					포스터 URL: {posterUrl}
+			List<String> artists = chatClient.prompt()
+				.user(u -> u.text("""
+						'{concertName}' 공연의 출연 아티스트(가수/그룹) 이름을 JSON 리스트로 추출
+						""").param("concertName", concertName))
+				.call()
+				.entity(new ParameterizedTypeReference<List<String>>() {
+				});
+			log.info("🔥 AI RAW RESPONSE = {}", artists);
 
-					[임무]
-					입력된 정보에서 공연의 '메인 아티스트(가수/그룹)' 이름을 리스트로 추출하세요.
-					""").param("concertName", concertName).param("posterUrl", posterUrl)).call();
-			String raw = response.content();
-			log.info("🔥 AI RAW RESPONSE = {}", raw);
+			return artists != null ? artists : List.of();
 
-			// 2.0의 .entity()는 마크다운 제거 및 JSON 파싱을 자동으로 수행합니다.
-			return response.entity(new ParameterizedTypeReference<List<String>>() {
-			});
 		}
 		catch (Exception e) {
 			log.error("가수 리스트 추출 실패: {}", e.getMessage());
@@ -65,7 +61,7 @@ public class AiClient {
 		}
 	}
 
-	// 2단계: Spotify ID 추출
+	// 2단계: Spotify ID 추출 (Spotify API 사용)
 	public List<ArtistIdRecord> fetchSpotifyIdByArtistName(String concertName, List<String> artistNames) {
 		String artistListStr = IntStream.range(0, artistNames.size())
 			.mapToObj(i -> String.format("%d. %s", i + 1, artistNames.get(i)))

@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -37,17 +38,32 @@ public class ConcertTestingController {
 
 	@GetMapping("/ai-test")
 	public ResponseEntity<?> testAi(@RequestParam String concertName) {
-		var artists = aiClient.fetchArtistList(concertName,
-				"https://image.stagepick.co.kr/performance/208744_118d6.webp");
+		// 1) AI로 아티스트 리스트 뽑기 (실패하면 List.of() 반환)
+		List<String> artists = aiClient.fetchArtistList(concertName);
 
-		List<AiClient.ArtistIdRecord> spotifyDetails = List.of();
+		// 2) 아티스트별로 Spotify API 호출 결과 누적
+		List<AiClient.ArtistIdRecord> spotifyDetails = new ArrayList<>();
 
-		if (artists != null && !artists.isEmpty()) {
-			spotifyDetails = aiClient.fetchSpotifyIdByArtistName(concertName, artists);
+		for (String artistName : artists) {
+			if (artistName == null || artistName.isBlank()) {
+				continue;
+			}
+
+			// ====== Spotify API 호출 (pseudo code) ======
+			// AiClient.ArtistIdRecord detail = spotifyClient.searchArtistId(artistName);
+			// if (detail != null) spotifyDetails.add(detail);
+			// ==========================================
 		}
 
-		return ResponseEntity.ok(Map.of("artistList", artists != null ? artists : "검색 결과 없음", "spotifyDetails",
-				spotifyDetails.isEmpty() ? "ID 찾지 못함" : spotifyDetails));
+		// 3) 테스트 응답
+		return ResponseEntity.ok(Map.of("concertName", concertName, "artistList", artists, // 빈
+																							// 리스트면
+																							// 그냥
+																							// []
+																							// 로
+																							// 나감
+				"spotifyDetails", spotifyDetails, // 못 찾으면 []
+				"meta", Map.of("artistCount", artists.size(), "spotifyHitCount", spotifyDetails.size())));
 	}
 
 }
