@@ -36,7 +36,7 @@ public class AiClient {
 				2. [1], [2] 와 같은 인용 표기 제외
 				3. 밴드나 그룹은 단일 엔티티로 처리
 				""")
-			.defaultOptions(org.springframework.ai.openai.OpenAiChatOptions.builder().model("sonar").build())
+			.defaultOptions(org.springframework.ai.openai.OpenAiChatOptions.builder().model(model).build())
 			.build();
 	}
 

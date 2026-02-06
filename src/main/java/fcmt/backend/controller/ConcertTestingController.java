@@ -53,4 +53,17 @@ public class ConcertTestingController {
 			.ok(Map.of("concertName", concertName, "artistList", artists, "spotifyDetails", spotifyDetails));
 	}
 
+	@GetMapping("/run-kopis-and-ai-test")
+	public ResponseEntity<?> runKopisAndAi() {
+		List<Long> changedConcertIds = concertService.syncKopisData();
+		if (changedConcertIds == null)
+			changedConcertIds = List.of();
+		var extracted = concertService.extractArtistsInfosWithAI(changedConcertIds);
+		if (extracted == null)
+			extracted = List.of();
+
+		return ResponseEntity.ok(Map.of("changedCount", changedConcertIds.size(), "extractedCount", extracted.size(),
+				"results", extracted));
+	}
+
 }
