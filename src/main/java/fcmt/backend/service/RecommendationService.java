@@ -1,6 +1,9 @@
 package fcmt.backend.service;
 
+import fcmt.backend.dto.ArtistItemDto;
 import fcmt.backend.dto.RecommendResponseDto;
+import fcmt.backend.dto.SpotifyTokenResponseDto;
+import fcmt.backend.dto.SpotifyTopArtistsResponseDto;
 import fcmt.backend.entity.Artist;
 import fcmt.backend.entity.Concert;
 import fcmt.backend.entity.User;
@@ -12,13 +15,14 @@ import fcmt.backend.repository.UserRepository;
 import fcmt.backend.security.JwtTokenProvider;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.core.io.ClassPathResource;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.ObjectMapper;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.RestTemplate;
 
-import java.io.IOException;
 import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.function.Function;
@@ -36,9 +40,15 @@ public class RecommendationService {
 
 	private final ArtistRepository artistRepository;
 
-	private final ObjectMapper objectMapper;
-
 	private final JwtTokenProvider jwtTokenProvider;
+
+	@Value("${spotify.api.client-id}")
+	private String clientId;
+
+	@Value("${spotify.api.client-secret}")
+	private String clientSecret;
+
+	private final RestTemplate restTemplate = new RestTemplate();
 
 	@Transactional(readOnly = true)
 	public RecommendResponseDto getRecommendation(String token) {
@@ -146,48 +156,94 @@ public class RecommendationService {
 			User user = userRepository.findById(userId)
 				.orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
 
-			// 1. JSON 읽기 및 Artist 정보 Upsert (이전과 동일)
-			ClassPathResource resource = new ClassPathResource("interest.json");
-			JsonNode itemsNode = objectMapper.readTree(resource.getInputStream()).get("items");
+			String refreshToken = user.getSpotifyRefreshTokenEnc();
+			String accessToken = refreshAccessToken(refreshToken);
+
+			List<ArtistItemDto> items = getTopArtists(accessToken);
+
 			List<Long> artistPrimaryIds = new ArrayList<>();
 
-			if (itemsNode != null && itemsNode.isArray()) {
-				for (JsonNode item : itemsNode) {
-					String spotifyId = item.get("id").asString();
-					String name = item.get("name").asString();
-					List<String> genres = new ArrayList<>();
-					item.get("genres").forEach(g -> genres.add(g.asString()));
+			if (items != null && !items.isEmpty()) {
+				for (ArtistItemDto item : items) {
+					String spotifyId = item.getId();
+					String name = item.getName();
+					List<String> genres = item.getGenres();
 
-					Artist artist = artistRepository.findBySpotifyArtistId(spotifyId).map(existing -> {
-						existing.setArtistName(name);
-						existing.setGenres(genres);
-						return existing;
-					})
-						.orElseGet(() -> artistRepository
-							.save(Artist.builder().spotifyArtistId(spotifyId).artistName(name).genres(genres).build()));
+					Artist artist = artistRepository.findBySpotifyArtistId(spotifyId)
+							.map(existing -> {
+								existing.setArtistName(name);
+								existing.setGenres(genres);
+								return existing;
+							})
+							.orElseGet(() -> artistRepository.save(
+									Artist.builder()
+											.spotifyArtistId(spotifyId)
+											.artistName(name)
+											.genres(genres)
+											.build()
+							));
 					artistPrimaryIds.add(artist.getArtistId());
 				}
 			}
 
-			// 2. UserPreference 저장
-			UserPreference preference = userPreferenceRepository.findById(userId).orElseGet(() -> {
-				UserPreference tempPreference = UserPreference.builder()
-					.user(user)
-					.artistIds(new ArrayList<>(artistPrimaryIds))
-					.updatedAt(OffsetDateTime.now())
-					.build();
-				return userPreferenceRepository.save(tempPreference);
-			});
+			UserPreference preference = userPreferenceRepository.findById(userId).orElseGet(() ->
+					userPreferenceRepository.save(UserPreference.builder()
+                    .user(user)
+                    .artistIds(new ArrayList<>())
+                    .updatedAt(OffsetDateTime.now())
+                    .build()));
 
 			preference.setArtistIds(artistPrimaryIds);
 			preference.setUpdatedAt(OffsetDateTime.now());
-			userPreferenceRepository.save(preference);
 
 			return getRecommendation(token);
+
+		} catch (Exception e) {
+			throw new RuntimeException("스포티파이 연동 업데이트 실패: " + e.getMessage());
 		}
-		catch (IOException e) {
-			throw new RuntimeException("업데이트 실패: " + e.getMessage());
+	}
+
+	public String refreshAccessToken(String refreshToken) {
+		String tokenUrl = "https://accounts.spotify.com/api/token";
+
+		// 헤더 설정
+		HttpHeaders headers = new HttpHeaders();
+		headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+		headers.setBasicAuth(clientId, clientSecret);
+
+		// 바디 설정
+		MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+		params.add("grant_type", "refresh_token");
+		params.add("refresh_token", refreshToken);
+
+		HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(params, headers);
+
+		try {
+			ResponseEntity<SpotifyTokenResponseDto> response = restTemplate.postForEntity(
+					tokenUrl, request, SpotifyTokenResponseDto.class);
+
+			if (response.getBody() != null) {
+				return response.getBody().getAccessToken();
+			}
+		} catch (Exception e) {
+			throw new RuntimeException("스포티파이 토큰 갱신 실패: " + e.getMessage());
 		}
+
+		return null;
+	}
+
+	public List<ArtistItemDto> getTopArtists(String accessToken) {
+		String url = "https://api.spotify.com/v1/me/top/artists?time_range=medium_term&limit=50";
+
+		// 헤더 설정
+		HttpHeaders headers = new HttpHeaders();
+		headers.setBearerAuth(accessToken);
+		HttpEntity<String> entity = new HttpEntity<>(headers);
+
+		ResponseEntity<SpotifyTopArtistsResponseDto> response = restTemplate.exchange(
+				url, HttpMethod.GET, entity, SpotifyTopArtistsResponseDto.class);
+
+		return Objects.requireNonNull(response.getBody()).getItems();
 	}
 
 }
