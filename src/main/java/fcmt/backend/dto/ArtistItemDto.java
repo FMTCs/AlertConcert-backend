@@ -6,10 +6,15 @@ import lombok.Setter;
 
 import java.util.List;
 
-@Getter @Setter
+@Getter
+@Setter
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ArtistItemDto {
-    private String id;
-    private String name;
-    private List<String> genres;
+
+	private String id;
+
+	private String name;
+
+	private List<String> genres;
+
 }

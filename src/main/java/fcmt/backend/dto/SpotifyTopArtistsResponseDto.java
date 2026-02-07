@@ -6,8 +6,11 @@ import lombok.Setter;
 
 import java.util.List;
 
-@Getter @Setter
+@Getter
+@Setter
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class SpotifyTopArtistsResponseDto {
-    private List<ArtistItemDto> items;
+
+	private List<ArtistItemDto> items;
+
 }

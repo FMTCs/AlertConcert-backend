@@ -169,36 +169,31 @@ public class RecommendationService {
 					String name = item.getName();
 					List<String> genres = item.getGenres();
 
-					Artist artist = artistRepository.findBySpotifyArtistId(spotifyId)
-							.map(existing -> {
-								existing.setArtistName(name);
-								existing.setGenres(genres);
-								return existing;
-							})
-							.orElseGet(() -> artistRepository.save(
-									Artist.builder()
-											.spotifyArtistId(spotifyId)
-											.artistName(name)
-											.genres(genres)
-											.build()
-							));
+					Artist artist = artistRepository.findBySpotifyArtistId(spotifyId).map(existing -> {
+						existing.setArtistName(name);
+						existing.setGenres(genres);
+						return existing;
+					})
+						.orElseGet(() -> artistRepository
+							.save(Artist.builder().spotifyArtistId(spotifyId).artistName(name).genres(genres).build()));
 					artistPrimaryIds.add(artist.getArtistId());
 				}
 			}
 
-			UserPreference preference = userPreferenceRepository.findById(userId).orElseGet(() ->
-					userPreferenceRepository.save(UserPreference.builder()
-                    .user(user)
-                    .artistIds(new ArrayList<>())
-                    .updatedAt(OffsetDateTime.now())
-                    .build()));
+			UserPreference preference = userPreferenceRepository.findById(userId)
+				.orElseGet(() -> userPreferenceRepository.save(UserPreference.builder()
+					.user(user)
+					.artistIds(new ArrayList<>())
+					.updatedAt(OffsetDateTime.now())
+					.build()));
 
 			preference.setArtistIds(artistPrimaryIds);
 			preference.setUpdatedAt(OffsetDateTime.now());
 
 			return getRecommendation(token);
 
-		} catch (Exception e) {
+		}
+		catch (Exception e) {
 			throw new RuntimeException("스포티파이 연동 업데이트 실패: " + e.getMessage());
 		}
 	}
@@ -219,13 +214,14 @@ public class RecommendationService {
 		HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(params, headers);
 
 		try {
-			ResponseEntity<SpotifyTokenResponseDto> response = restTemplate.postForEntity(
-					tokenUrl, request, SpotifyTokenResponseDto.class);
+			ResponseEntity<SpotifyTokenResponseDto> response = restTemplate.postForEntity(tokenUrl, request,
+					SpotifyTokenResponseDto.class);
 
 			if (response.getBody() != null) {
 				return response.getBody().getAccessToken();
 			}
-		} catch (Exception e) {
+		}
+		catch (Exception e) {
 			throw new RuntimeException("스포티파이 토큰 갱신 실패: " + e.getMessage());
 		}
 
@@ -240,8 +236,8 @@ public class RecommendationService {
 		headers.setBearerAuth(accessToken);
 		HttpEntity<String> entity = new HttpEntity<>(headers);
 
-		ResponseEntity<SpotifyTopArtistsResponseDto> response = restTemplate.exchange(
-				url, HttpMethod.GET, entity, SpotifyTopArtistsResponseDto.class);
+		ResponseEntity<SpotifyTopArtistsResponseDto> response = restTemplate.exchange(url, HttpMethod.GET, entity,
+				SpotifyTopArtistsResponseDto.class);
 
 		return Objects.requireNonNull(response.getBody()).getItems();
 	}
