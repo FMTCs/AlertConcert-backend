@@ -18,142 +18,146 @@ import java.util.*;
 @RequiredArgsConstructor
 public class ConcertCastApplyService {
 
-    private final ArtistRepository artistRepository;
-    private final ConcertRepository concertRepository;
+	private final ArtistRepository artistRepository;
 
-    /**
-     * extracted 결과를 바탕으로:
-     * 1) artists upsert(spotify_artist_id unique)
-     * 2) concerts.casts = artist_id[] 업데이트
-     */
-    @Transactional
-    public void applyExtracted(List<ConcertService.ConcertArtistExtractResult> extracted) {
-        if (extracted == null || extracted.isEmpty()) {
-            log.info("AI 추출 결과가 없어 DB 반영을 생략합니다.");
-            return;
-        }
+	private final ConcertRepository concertRepository;
 
-        // 같은 실행 내 중복 조회 최소화
-        Map<String, Long> spotifyIdToArtistIdCache = new HashMap<>();
+	/**
+	 * extracted 결과를 바탕으로: 1) artists upsert(spotify_artist_id unique) 2) concerts.casts =
+	 * artist_id[] 업데이트
+	 */
+	@Transactional
+	public void applyExtracted(List<ConcertService.ConcertArtistExtractResult> extracted) {
+		if (extracted == null || extracted.isEmpty()) {
+			log.info("AI 추출 결과가 없어 DB 반영을 생략합니다.");
+			return;
+		}
 
-        int insertedArtists = 0;
-        int updatedArtistNames = 0;
-        int updatedConcerts = 0;
-        int skippedConcerts = 0;
+		// 같은 실행 내 중복 조회 최소화
+		Map<String, Long> spotifyIdToArtistIdCache = new HashMap<>();
 
-        for (var r : extracted) {
-            Long concertId = r.concertId();
-            String concertName = r.concertName();
-            List<AiClient.ArtistIdRecord> spotifyDetails =
-                    (r.spotifyDetails() == null) ? List.of() : r.spotifyDetails();
+		int insertedArtists = 0;
+		int updatedArtistNames = 0;
+		int updatedConcerts = 0;
+		int skippedConcerts = 0;
 
-            if (spotifyDetails.isEmpty()) {
-                log.warn("콘서트 출연진 추출 결과가 비어 있어 casts 업데이트를 스킵합니다. (concert_id={}, name='{}')",
-                        concertId, concertName);
-                skippedConcerts++;
-                continue;
-            }
+		for (var r : extracted) {
+			Long concertId = r.concertId();
+			String concertName = r.concertName();
+			List<AiClient.ArtistIdRecord> spotifyDetails = (r.spotifyDetails() == null) ? List.of()
+					: r.spotifyDetails();
 
-            // (1) spotify_artist_id -> artist_id 확보 (upsert)
-            LinkedHashSet<Long> artistIdSet = new LinkedHashSet<>();
+			if (spotifyDetails.isEmpty()) {
+				log.warn("콘서트 출연진 추출 결과가 비어 있어 casts 업데이트를 스킵합니다. (concert_id={}, name='{}')", concertId, concertName);
+				skippedConcerts++;
+				continue;
+			}
 
-            for (AiClient.ArtistIdRecord d : spotifyDetails) {
-                if (d == null) continue;
+			// (1) spotify_artist_id -> artist_id 확보 (upsert)
+			LinkedHashSet<Long> artistIdSet = new LinkedHashSet<>();
 
-                String spotifyArtistId = getSpotifyArtistId(d);
-                String artistName = d.name();
+			for (AiClient.ArtistIdRecord d : spotifyDetails) {
+				if (d == null)
+					continue;
 
-                if (spotifyArtistId == null || spotifyArtistId.isBlank()) continue;
-                if (artistName == null || artistName.isBlank()) continue;
+				String spotifyArtistId = getSpotifyArtistId(d);
+				String artistName = d.name();
 
-                Long artistId = spotifyIdToArtistIdCache.get(spotifyArtistId);
-                if (artistId == null) {
-                    UpsertResult up = upsertArtist(spotifyArtistId, artistName);
-                    artistId = up.artistId();
+				if (spotifyArtistId == null || spotifyArtistId.isBlank())
+					continue;
+				if (artistName == null || artistName.isBlank())
+					continue;
 
-                    spotifyIdToArtistIdCache.put(spotifyArtistId, artistId);
-                    insertedArtists += up.inserted ? 1 : 0;
-                    updatedArtistNames += up.updatedName ? 1 : 0;
-                }
+				Long artistId = spotifyIdToArtistIdCache.get(spotifyArtistId);
+				if (artistId == null) {
+					UpsertResult up = upsertArtist(spotifyArtistId, artistName);
+					artistId = up.artistId();
 
-                if (artistId != null) {
-                    artistIdSet.add(artistId);
-                }
-            }
+					spotifyIdToArtistIdCache.put(spotifyArtistId, artistId);
+					insertedArtists += up.inserted ? 1 : 0;
+					updatedArtistNames += up.updatedName ? 1 : 0;
+				}
 
-            if (artistIdSet.isEmpty()) {
-                log.warn("유효한 artist_id를 만들지 못해 casts 업데이트를 스킵합니다. (concert_id={}, name='{}')",
-                        concertId, concertName);
-                skippedConcerts++;
-                continue;
-            }
+				if (artistId != null) {
+					artistIdSet.add(artistId);
+				}
+			}
 
-            // (2) concerts.casts 업데이트 (변경 없으면 save 생략)
-            Concert concert = concertRepository.findById(concertId).orElse(null);
-            if (concert == null) {
-                log.warn("콘서트를 찾지 못해 casts 업데이트를 스킵합니다. (concert_id={}, name='{}')",
-                        concertId, concertName);
-                skippedConcerts++;
-                continue;
-            }
+			if (artistIdSet.isEmpty()) {
+				log.warn("유효한 artist_id를 만들지 못해 casts 업데이트를 스킵합니다. (concert_id={}, name='{}')", concertId, concertName);
+				skippedConcerts++;
+				continue;
+			}
 
-            List<Long> newCasts = new ArrayList<>(artistIdSet);
+			// (2) concerts.casts 업데이트 (변경 없으면 save 생략)
+			Concert concert = concertRepository.findById(concertId).orElse(null);
+			if (concert == null) {
+				log.warn("콘서트를 찾지 못해 casts 업데이트를 스킵합니다. (concert_id={}, name='{}')", concertId, concertName);
+				skippedConcerts++;
+				continue;
+			}
 
-            if (Objects.equals(concert.getCasts(), newCasts)) {
-                log.info("casts 변경 없음. (concert_id={}, name='{}', castsSize={})",
-                        concertId, concertName, newCasts.size());
-                continue;
-            }
+			List<Long> newCasts = new ArrayList<>(artistIdSet);
 
-            concert.setCasts(newCasts);
-            concertRepository.save(concert);
-            updatedConcerts++;
+			if (Objects.equals(concert.getCasts(), newCasts)) {
+				log.info("casts 변경 없음. (concert_id={}, name='{}', castsSize={})", concertId, concertName,
+						newCasts.size());
+				continue;
+			}
 
-            log.info("casts 업데이트 완료. (concert_id={}, name='{}', castsSize={}, casts={})",
-                    concertId, concertName, newCasts.size(), newCasts);
-        }
+			concert.setCasts(newCasts);
+			concertRepository.save(concert);
+			updatedConcerts++;
 
-        log.info("DB 반영 요약: concertsUpdated={}, concertsSkipped={}, artistsInserted={}, artistNameUpdated={}",
-                updatedConcerts, skippedConcerts, insertedArtists, updatedArtistNames);
-    }
+			log.info("casts 업데이트 완료. (concert_id={}, name='{}', castsSize={}, casts={})", concertId, concertName,
+					newCasts.size(), newCasts);
+		}
 
-    private String getSpotifyArtistId(AiClient.ArtistIdRecord d) {
-        return d.spotify_id();
-    }
+		log.info("DB 반영 요약: concertsUpdated={}, concertsSkipped={}, artistsInserted={}, artistNameUpdated={}",
+				updatedConcerts, skippedConcerts, insertedArtists, updatedArtistNames);
+	}
 
-    private record UpsertResult(Long artistId, boolean inserted, boolean updatedName) {}
+	private String getSpotifyArtistId(AiClient.ArtistIdRecord d) {
+		return d.spotify_id();
+	}
 
-    private UpsertResult upsertArtist(String spotifyArtistId, String artistName) {
-        // 있으면 사용 (+ 필요 시 name만 갱신)
-        Optional<Artist> existingOpt = artistRepository.findBySpotifyArtistId(spotifyArtistId);
-        if (existingOpt.isPresent()) {
-            Artist a = existingOpt.get();
+	private record UpsertResult(Long artistId, boolean inserted, boolean updatedName) {
+	}
 
-            boolean updatedName = false;
-            if (!Objects.equals(a.getArtistName(), artistName)) {
-                a.setArtistName(artistName);
-                artistRepository.save(a);
-                updatedName = true;
-            }
+	private UpsertResult upsertArtist(String spotifyArtistId, String artistName) {
+		// 있으면 사용 (+ 필요 시 name만 갱신)
+		Optional<Artist> existingOpt = artistRepository.findBySpotifyArtistId(spotifyArtistId);
+		if (existingOpt.isPresent()) {
+			Artist a = existingOpt.get();
 
-            return new UpsertResult(a.getArtistId(), false, updatedName);
-        }
+			boolean updatedName = false;
+			if (!Objects.equals(a.getArtistName(), artistName)) {
+				a.setArtistName(artistName);
+				artistRepository.save(a);
+				updatedName = true;
+			}
 
-        // 없으면 insert (genres는 일단 빈 배열)
-        try {
-            Artist created = Artist.builder()
-                    .spotifyArtistId(spotifyArtistId)
-                    .artistName(artistName)
-                    .genres(List.of()) // TEXT[] NOT NULL default 있는데, 엔티티가 null 허용 안 하면 빈 리스트로
-                    .build();
+			return new UpsertResult(a.getArtistId(), false, updatedName);
+		}
 
-            Artist saved = artistRepository.save(created);
-            return new UpsertResult(saved.getArtistId(), true, false);
-        } catch (DataIntegrityViolationException e) {
-            // 동시 insert 레이스 대비: 다시 조회해서 id 반환
-            return artistRepository.findBySpotifyArtistId(spotifyArtistId)
-                    .map(a -> new UpsertResult(a.getArtistId(), false, false))
-                    .orElse(new UpsertResult(null, false, false));
-        }
-    }
+		// 없으면 insert (genres는 일단 빈 배열)
+		try {
+			Artist created = Artist.builder()
+				.spotifyArtistId(spotifyArtistId)
+				.artistName(artistName)
+				.genres(List.of()) // TEXT[] NOT NULL default 있는데, 엔티티가 null 허용 안 하면 빈
+									// 리스트로
+				.build();
+
+			Artist saved = artistRepository.save(created);
+			return new UpsertResult(saved.getArtistId(), true, false);
+		}
+		catch (DataIntegrityViolationException e) {
+			// 동시 insert 레이스 대비: 다시 조회해서 id 반환
+			return artistRepository.findBySpotifyArtistId(spotifyArtistId)
+				.map(a -> new UpsertResult(a.getArtistId(), false, false))
+				.orElse(new UpsertResult(null, false, false));
+		}
+	}
+
 }
