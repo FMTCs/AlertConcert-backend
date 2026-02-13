@@ -59,11 +59,7 @@ public class ConcertTestingController {
 	@GetMapping("/run-kopis-and-ai-test")
 	public ResponseEntity<?> runKopisAndAi() {
 		List<Long> changedConcertIds = concertService.syncKopisData();
-		if (changedConcertIds == null)
-			changedConcertIds = List.of();
 		var extracted = concertService.extractArtistsInfosWithAI(changedConcertIds);
-		if (extracted == null)
-			extracted = List.of();
 
 		// TODO3 적용(artists upsert + concerts.casts 업데이트)
 		concertCastApplyService.applyExtracted(extracted);
