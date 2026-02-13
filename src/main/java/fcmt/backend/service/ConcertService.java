@@ -200,6 +200,10 @@ public class ConcertService {
 	// TODO: public -> private으로 다시 수정해야함(테스트를 위해 public으로 변경해둠)
 	public static record ConcertArtistExtractResult(Long concertId, String concertName, List<String> artistNames,
 			List<AiClient.ArtistIdRecord> spotifyDetails) {
+		public ConcertArtistExtractResult {
+			artistNames = (artistNames == null) ? List.of() : List.copyOf(artistNames);
+			spotifyDetails = (spotifyDetails == null) ? List.of() : List.copyOf(spotifyDetails);
+		}
 	}
 
 	// TODO: public -> private으로 다시 수정해야함(테스트를 위해 public으로 변경해둠)
