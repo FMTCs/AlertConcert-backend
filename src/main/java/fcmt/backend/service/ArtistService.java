@@ -3,6 +3,8 @@ package fcmt.backend.service;
 import fcmt.backend.ai.AiClient;
 import fcmt.backend.dto.ArtistAiResponseDto;
 import fcmt.backend.entity.Artist;
+import fcmt.backend.exception.BusinessException;
+import fcmt.backend.exception.ErrorCode;
 import fcmt.backend.repository.ArtistRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +28,12 @@ public class ArtistService {
 
 	@Transactional
 	public List<Long> addAndGetArtistIds(List<Map<String, String>> artistList) {
+		// 1. 입력값 검증 (방어 코드)
+		if (artistList == null || artistList.isEmpty()) {
+			log.error("가수 리스트가 비어있습니다!");
+			return new ArrayList<>();
+		}
+
 		List<Long> castIds = new ArrayList<>();
 		List<Map<String, String>> unKnownArtists = new ArrayList<>();
 
@@ -57,7 +65,19 @@ public class ArtistService {
 
 			// 3-2. Ai 사용으로 장르 정보 가져오기
 			log.info(">>> {}명의 신규 가수 정보를 AI로부터 가져옵니다.", distinctUnknowns.size());
-			List<ArtistAiResponseDto> newArtistDtos = aiClient.fetchGenresFromAi(distinctUnknowns);
+			List<ArtistAiResponseDto> newArtistDtos;
+			try {
+				newArtistDtos = aiClient.fetchGenresFromAi(distinctUnknowns);
+			}
+			catch (Exception e) {
+				log.error("AI 정보 획득 실패 {}", e.getMessage());
+				throw new BusinessException(ErrorCode.AI_API_ERROR);
+			}
+
+			// 데이터 개수 검증
+			if (newArtistDtos == null || newArtistDtos.isEmpty()) {
+				throw new BusinessException(ErrorCode.GENRE_NOT_FOUND);
+			}
 
 			// 3-3 해당 정보들로 entity 만들기
 			List<Artist> artists = newArtistDtos.stream()
