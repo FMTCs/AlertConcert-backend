@@ -2,6 +2,7 @@ package fcmt.backend.controller;
 // TODO: 테스트를 위해 ConcertTestingController를 생성했음. 삭제 필요.
 
 import fcmt.backend.ai.AiClient;
+import fcmt.backend.service.ArtistGenreService;
 import fcmt.backend.service.ConcertCastApplyService;
 import fcmt.backend.service.ConcertService;
 import fcmt.backend.service.SpotifySearchService;
@@ -24,6 +25,8 @@ public class ConcertTestingController {
 	private final ConcertService concertService;
 
 	private final ConcertCastApplyService concertCastApplyService;
+
+	private final ArtistGenreService artistGenreService;
 
 	private final AiClient aiClient;
 
@@ -61,11 +64,14 @@ public class ConcertTestingController {
 		List<Long> changedConcertIds = concertService.syncKopisData();
 		var extracted = concertService.extractArtistsInfosWithAI(changedConcertIds);
 
-		// TODO3 적용(artists upsert + concerts.casts 업데이트)
-		concertCastApplyService.applyExtracted(extracted);
+		// TODO3 적용: artists upsert + concerts.casts 업데이트
+		List<Long> genreTargetArtistIds = concertCastApplyService.applyExtracted(extracted);
+
+		// TODO4 적용: genres 분류 + artists.genres 업데이트
+		artistGenreService.classifyAndUpdateGenres(genreTargetArtistIds);
 
 		return ResponseEntity.ok(Map.of("changedCount", changedConcertIds.size(), "extractedCount", extracted.size(),
-				"results", extracted));
+				"genreTargetCount", genreTargetArtistIds.size(), "results", extracted));
 	}
 
 }
