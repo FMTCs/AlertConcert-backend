@@ -2,12 +2,15 @@ package fcmt.backend.service;
 
 import fcmt.backend.dto.SpotifyTokenResponseDto;
 import fcmt.backend.dto.SpotifyUserDto;
+import fcmt.backend.exception.BusinessException;
+import fcmt.backend.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 @Service
@@ -42,17 +45,27 @@ public class SpotifyOAuthService {
 
 		HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(params, headers);
 
-		ResponseEntity<SpotifyTokenResponseDto> response = restTemplate.postForEntity(tokenUrl, request,
-				SpotifyTokenResponseDto.class);
+		try {
+			ResponseEntity<SpotifyTokenResponseDto> response = restTemplate.postForEntity(tokenUrl, request,
+					SpotifyTokenResponseDto.class);
 
-		SpotifyTokenResponseDto tokenResponse = response.getBody();
+			SpotifyTokenResponseDto tokenResponse = response.getBody();
 
-		if (tokenResponse == null || tokenResponse.getAccessToken() == null
-				|| tokenResponse.getRefreshToken() == null) {
-			throw new RuntimeException("SpotifyAuthorize Error!");
+			if (tokenResponse == null || tokenResponse.getAccessToken() == null
+					|| tokenResponse.getRefreshToken() == null) {
+				throw new BusinessException(ErrorCode.SPOTIFY_INVALID_TOKEN);
+			}
+
+			return tokenResponse;
+
 		}
+		catch (HttpClientErrorException e) {
+			throw new BusinessException(ErrorCode.SESSION_EXPIRED);
 
-		return tokenResponse;
+		}
+		catch (Exception e) {
+			throw new BusinessException(ErrorCode.SPOTIFY_API_ERROR);
+		}
 	}
 
 	public SpotifyUserDto getSpotifyUserInfo(String accessToken) {
@@ -63,14 +76,24 @@ public class SpotifyOAuthService {
 
 		HttpEntity<Void> request = new HttpEntity<>(headers);
 
-		ResponseEntity<SpotifyUserDto> response = restTemplate.exchange(userInfoUrl, HttpMethod.GET, request,
-				SpotifyUserDto.class);
+		try {
+			ResponseEntity<SpotifyUserDto> response = restTemplate.exchange(userInfoUrl, HttpMethod.GET, request,
+					SpotifyUserDto.class);
 
-		if (response.getBody() == null) {
-			throw new RuntimeException("SpotifyAuthorize Error!");
+			if (response.getBody() == null) {
+				throw new BusinessException(ErrorCode.SPOTIFY_INVALID_TOKEN);
+			}
+
+			return response.getBody();
+
 		}
+		catch (HttpClientErrorException e) {
+			throw new BusinessException(ErrorCode.SESSION_EXPIRED);
 
-		return response.getBody();
+		}
+		catch (Exception e) {
+			throw new BusinessException(ErrorCode.SPOTIFY_API_ERROR);
+		}
 	}
 
 }

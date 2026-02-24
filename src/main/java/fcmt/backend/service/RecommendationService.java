@@ -8,6 +8,8 @@ import fcmt.backend.entity.Artist;
 import fcmt.backend.entity.Concert;
 import fcmt.backend.entity.User;
 import fcmt.backend.entity.UserPreference;
+import fcmt.backend.exception.BusinessException;
+import fcmt.backend.exception.ErrorCode;
 import fcmt.backend.repository.ArtistRepository;
 import fcmt.backend.repository.ConcertRepository;
 import fcmt.backend.repository.UserPreferenceRepository;
@@ -15,12 +17,14 @@ import fcmt.backend.repository.UserRepository;
 import fcmt.backend.security.JwtTokenProvider;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.OffsetDateTime;
@@ -28,6 +32,7 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class RecommendationService {
@@ -54,7 +59,7 @@ public class RecommendationService {
 	public RecommendResponseDto getRecommendation(String token) {
 		Long userId = jwtTokenProvider.parseClaimsAllowExpired(token).get("uid", Long.class);
 		UserPreference preference = userPreferenceRepository.findById(userId)
-			.orElseThrow(() -> new EntityNotFoundException("선호도 정보가 없습니다."));
+			.orElseThrow(() -> new BusinessException(ErrorCode.USER_PREFERENCE_NOT_FOUND));
 
 		List<Long> preferredIds = preference.getArtistIds();
 		if (preferredIds == null || preferredIds.isEmpty()) {
@@ -154,7 +159,7 @@ public class RecommendationService {
 		try {
 			Long userId = jwtTokenProvider.parseClaimsAllowExpired(token).get("uid", Long.class);
 			User user = userRepository.findById(userId)
-				.orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
+				.orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
 			String refreshToken = user.getSpotifyRefreshTokenEnc();
 			String accessToken = refreshAccessToken(refreshToken);
@@ -193,8 +198,13 @@ public class RecommendationService {
 			return getRecommendation(token);
 
 		}
+		catch (HttpClientErrorException.Unauthorized e) {
+			// spotify 세션 만료 or spotify 오류
+			throw new BusinessException(ErrorCode.SESSION_EXPIRED);
+		}
 		catch (Exception e) {
-			throw new RuntimeException("스포티파이 연동 업데이트 실패: " + e.getMessage());
+			// DB 저장 오류 발생
+			throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "데이터 동기화 중 오류가 발생했습니다.");
 		}
 	}
 
@@ -217,15 +227,29 @@ public class RecommendationService {
 			ResponseEntity<SpotifyTokenResponseDto> response = restTemplate.postForEntity(tokenUrl, request,
 					SpotifyTokenResponseDto.class);
 
-			if (response.getBody() != null) {
-				return response.getBody().getAccessToken();
+			SpotifyTokenResponseDto body = response.getBody();
+
+			if (body == null || body.getAccessToken() == null) {
+				throw new BusinessException(ErrorCode.SPOTIFY_INVALID_TOKEN);
 			}
+			return body.getAccessToken();
+		}
+		catch (HttpClientErrorException e) {
+			// 4xx 에러 (토큰 만료, 클라이언트 정보 불일치 등)
+			log.warn("Spotify API Client Error: {} - {}", e.getStatusCode(), e.getResponseBodyAsString());
+
+			// 리프레시 토큰 자체가 만료된 경우 세션 만료로 처리
+			if (e.getStatusCode() == HttpStatus.UNAUTHORIZED || e.getStatusCode() == HttpStatus.BAD_REQUEST) {
+				throw new BusinessException(ErrorCode.SESSION_EXPIRED);
+			}
+			throw new BusinessException(ErrorCode.SPOTIFY_API_ERROR);
+
 		}
 		catch (Exception e) {
-			throw new RuntimeException("스포티파이 토큰 갱신 실패: " + e.getMessage());
+			// 5xx 에러 또는 네트워크 타임아웃
+			log.error("Spotify API Connection Error: ", e);
+			throw new BusinessException(ErrorCode.SPOTIFY_API_ERROR);
 		}
-
-		return null;
 	}
 
 	public List<ArtistItemDto> getTopArtists(String accessToken) {

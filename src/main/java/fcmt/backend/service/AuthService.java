@@ -1,8 +1,7 @@
 package fcmt.backend.service;
 
 import fcmt.backend.dto.*;
-import fcmt.backend.exception.custom.DuplicateUserException;
-import fcmt.backend.exception.custom.TokenInvalidException;
+import fcmt.backend.exception.BusinessException;
 import fcmt.backend.repository.SessionTokenRepository;
 import fcmt.backend.repository.SignupTokenRepository;
 import fcmt.backend.security.JwtTokenProvider;
@@ -11,15 +10,12 @@ import io.jsonwebtoken.Claims;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import fcmt.backend.entity.User;
 import fcmt.backend.repository.UserRepository;
-import fcmt.backend.exception.custom.UserNotFoundException;
-import fcmt.backend.exception.custom.InvalidPasswordException;
+import fcmt.backend.exception.ErrorCode;
 
 import java.util.Map;
 
@@ -39,8 +35,9 @@ public class AuthService {
 	private final PasswordEncoder passwordEncoder;
 
 	public User getUser(String username) {
-		// [TODO] User 미 존재, Password 오류 둘다 동일하게 처리하기 => 보안 이슈 해결
-		return userRepository.findByUsername(username).orElseThrow(UserNotFoundException::new);
+		;
+		return userRepository.findByUsername(username)
+			.orElseThrow(() -> new BusinessException(ErrorCode.AUTHENTICATION_FAILED));
 	}
 
 	// Login Service 구현
@@ -49,7 +46,7 @@ public class AuthService {
 		User user = getUser(request.getUsername());
 		// 2. ID/PW 검증부
 		if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-			throw new InvalidPasswordException();
+			throw new BusinessException(ErrorCode.AUTHENTICATION_FAILED);
 		}
 		// JWT 토큰 생성부
 		String accessToken = jwtTokenProvider.createSessionToken(user, SessionTokenConfig.ACCESS);
@@ -59,7 +56,7 @@ public class AuthService {
 	}
 
 	@Transactional // 원자성 보장을 위해서 추가
-	public ResponseEntity<?> register(RegisterRequestDto request) {
+	public void register(RegisterRequestDto request) {
 
 		// 1. username 중복 검사
 		validateDuplicateUsername(request.getUsername());
@@ -72,9 +69,9 @@ public class AuthService {
 		// 3. Redis의 signupToken을 가지고 있을 때, User table에 채울 정보 가져오기
 		Map<Object, Object> registerDatas = signupTokenRepository.find(request.getSignupToken());
 
-		// 4. Redis에서 토큰이 없다면 유효하지 않다면 에러 처리 [TODO] : 토큰 invalid 처리 중복 해결 + 에러 메세지 수정
+		// 4. Redis에서 토큰이 없다면 유효하지 않다면 에러 처리
 		if (registerDatas == null || registerDatas.isEmpty()) {
-			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("인증 세션이 만료되었습니다. Spotify 인증을 다시 진행해주세요.");
+			throw new BusinessException(ErrorCode.SESSION_EXPIRED);
 		}
 
 		// 5. spotifyRefreshToken 및 spotifyUserId 가져오기 [TODO] RefreshToken 암호화하기
@@ -92,8 +89,6 @@ public class AuthService {
 
 		// 7. DB에 저장
 		userRepository.save(user);
-		// [TODO] 처리 메세지 정리
-		return ResponseEntity.ok("Register Success!");
 	}
 
 	public RefreshResponseDto refresh(String token) {
@@ -102,16 +97,17 @@ public class AuthService {
 		Long uid = claims.get("uid", Long.class);
 
 		// 2. Redis에 해당 토큰이 존재하는지 검색 -> 없으면 에러
-		String sessionRefreshToken = sessionTokenRepository.find(uid).orElseThrow(TokenInvalidException::new);
+		String sessionRefreshToken = sessionTokenRepository.find(uid)
+			.orElseThrow(() -> new BusinessException(ErrorCode.TOKEN_INVALID));
 
 		// 3. 해당 토큰이 존재한다면 기존 토큰을 제거
 		if (!jwtTokenProvider.isValidateToken(sessionRefreshToken)) {
 			sessionTokenRepository.delete(uid);
-			throw new TokenInvalidException();
+			throw new BusinessException(ErrorCode.TOKEN_INVALID);
 		}
 
 		// 4. User table에서 검색 후 JWT 토큰 생성
-		User user = userRepository.findById(uid).orElseThrow(UserNotFoundException::new);
+		User user = userRepository.findById(uid).orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 		String accessToken = jwtTokenProvider.createSessionToken(user, SessionTokenConfig.ACCESS);
 		String refreshToken = jwtTokenProvider.createSessionToken(user, SessionTokenConfig.REFRESH);
 
@@ -139,7 +135,7 @@ public class AuthService {
 
 	private void validateDuplicateUsername(String username) {
 		if (userRepository.existsByUsername(username)) {
-			throw new DuplicateUserException();
+			throw new BusinessException(ErrorCode.DUPLICATE_USER);
 		}
 	}
 

@@ -18,7 +18,8 @@ public class AuthController {
 	// [TODO] ResponseDto 관련 통일 및 처리 필요
 	@PostMapping("/register")
 	public ResponseEntity<?> register(@RequestBody RegisterRequestDto request) {
-		return authService.register(request);
+		authService.register(request);
+		return ResponseEntity.ok("Register Success!"); // [TODO] Dto 관련 통합 이후 삭제
 	}
 
 	@PostMapping("/login")
