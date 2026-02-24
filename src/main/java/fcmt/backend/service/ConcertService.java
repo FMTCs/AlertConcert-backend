@@ -36,6 +36,8 @@ public class ConcertService {
 
 	private final ConcertCastApplyService concertCastApplyService;
 
+	private final ArtistGenreService artistGenreService;
+
 	@Value("${kopis.api.key}") // TODO: 지금은 application.properties에 저장하긴 했는데.. 이거 어떻게 관리?
 	private String serviceKey;
 
@@ -52,7 +54,10 @@ public class ConcertService {
 		log.info(">>> 추출 완료. 대상 콘서트={}, 성공 결과={}", changedConcertIds.size(), extracted.size());
 
 		// 3. extracted 기반으로 artists 테이블 upsert + concerts.casts 업데이트
-		concertCastApplyService.applyExtracted(extracted);
+		List<Long> genreTargetArtistIds = concertCastApplyService.applyExtracted(extracted);
+
+		// 4. 신규 artist만 장르 분류 + artists.genres 업데이트
+		artistGenreService.classifyAndUpdateGenres(genreTargetArtistIds);
 	}
 
 	//
