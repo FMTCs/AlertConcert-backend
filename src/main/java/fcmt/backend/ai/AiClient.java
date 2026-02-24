@@ -89,6 +89,9 @@ public class AiClient {
 
 	// 3단계: 장르 분류 (genre.json 기반, full-path 1~3개 선택)
 	public record ArtistGenreRecord(String spotify_artist_id, List<String> genres) {
+		public ArtistGenreRecord {
+			genres = (genres == null) ? List.of() : List.copyOf(genres);
+		}
 	}
 
 	public ArtistGenreRecord fetchGenresWithAi(String spotifyArtistId, String artistName) {
