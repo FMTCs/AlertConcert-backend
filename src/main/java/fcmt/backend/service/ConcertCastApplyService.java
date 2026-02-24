@@ -27,14 +27,17 @@ public class ConcertCastApplyService {
 	 * artist_id[] 업데이트
 	 */
 	@Transactional
-	public void applyExtracted(List<ConcertService.ConcertArtistExtractResult> extracted) {
+	public List<Long> applyExtracted(List<ConcertService.ConcertArtistExtractResult> extracted) {
 		if (extracted == null || extracted.isEmpty()) {
 			log.info("AI 추출 결과가 없어 DB 반영을 생략합니다.");
-			return;
+			return List.of();
 		}
 
 		// 같은 실행 내 중복 조회 최소화
 		Map<String, Long> spotifyIdToArtistIdCache = new HashMap<>();
+
+		// genre 분류가 필요한 artist_id 모음. (return용)
+		LinkedHashSet<Long> genreTargetArtistIds = new LinkedHashSet<>();
 
 		int insertedArtists = 0;
 		int updatedArtistNames = 0;
@@ -76,6 +79,10 @@ public class ConcertCastApplyService {
 					spotifyIdToArtistIdCache.put(spotifyArtistId, artistId);
 					insertedArtists += up.inserted ? 1 : 0;
 					updatedArtistNames += up.updatedName ? 1 : 0;
+					// "이번 런에서 새로 insert된 아티스트"만 장르 분류 대상으로
+					if (up.inserted() && artistId != null) {
+						genreTargetArtistIds.add(artistId);
+					}
 				}
 
 				if (artistId != null) {
@@ -115,6 +122,7 @@ public class ConcertCastApplyService {
 
 		log.info("DB 반영 요약: concertsUpdated={}, concertsSkipped={}, artistsInserted={}, artistNameUpdated={}",
 				updatedConcerts, skippedConcerts, insertedArtists, updatedArtistNames);
+		return new ArrayList<>(genreTargetArtistIds);
 	}
 
 	private String getSpotifyArtistId(AiClient.ArtistIdRecord d) {

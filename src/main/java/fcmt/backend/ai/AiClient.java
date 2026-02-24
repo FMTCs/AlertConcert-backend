@@ -1,7 +1,5 @@
 package fcmt.backend.ai;
 
-import fcmt.backend.dto.ArtistAiResponseDto;
-import fcmt.backend.dto.ArtistListWrapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.beans.factory.annotation.Value;
@@ -11,7 +9,7 @@ import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -21,7 +19,7 @@ public class AiClient {
 
 	private final ChatClient chatClient;
 
-	@Value("classpath:genres.json")
+	@Value("classpath:genre.json")
 	private Resource genresResource;
 
 	// 1. ChatClient.Builder를 주입받아 기본 시스템 설정을 입힙니다.
@@ -89,32 +87,57 @@ public class AiClient {
 		}
 	}
 
-	// 3단계: 장르 분류
-	public List<ArtistAiResponseDto> fetchGenresFromAi(List<Map<String, String>> artists) {
+	// 3단계: 장르 분류 (genre.json 기반, full-path 1~3개 선택)
+	public record ArtistGenreRecord(String spotify_artist_id, List<String> genres) {
+	}
+
+	public ArtistGenreRecord fetchGenresWithAi(String spotifyArtistId, String artistName) {
 		try {
-			String allowedGenres = genresResource.getContentAsString(StandardCharsets.UTF_8);
-			String artistListStr = artists.stream()
-				.map(m -> String.format("- Name: %s (ID: %s)", m.get("artist_name"), m.get("spotify_artist_id")))
-				.collect(Collectors.joining("\n"));
+			String allowedLeavesJson = genresResource.getContentAsString(StandardCharsets.UTF_8);
 
-			return chatClient.prompt()
+			List<ArtistGenreRecord> raw = chatClient.prompt()
 				.user(u -> u.text("""
-						You are a music genre classifier.
-						Return genres ONLY from the allowed list.
+						너는 장르 분류기다.
 
-						Artists:
-						{artistListStr}
+						규칙:
+						- 아래 genre.json 배열에 포함된 leaf 문자열 중에서만 선택
+						- 1~3개만 선택
+						- 응답은 JSON 리스트만
+						- 리스트의 각 원소는 키 2개만 가진다: spotify_artist_id, genres
+						- json 배열에 없는 값이면 genres는 빈 리스트로
 
-						Allowed Genres:
-						{allowedGenres}
-						""").param("artistListStr", artistListStr).param("allowedGenres", allowedGenres))
+						입력:
+						artist_name: {artistName}
+						spotify_artist_id: {spotifyArtistId}
+
+						genre.json:
+						{allowedLeavesJson}
+						""")
+					.param("artistName", artistName)
+					.param("spotifyArtistId", spotifyArtistId)
+					.param("allowedLeavesJson", allowedLeavesJson))
 				.call()
-				.entity(ArtistListWrapper.class)
-				.artists(); // Wrapper에서 리스트 추출
+				.entity(new ParameterizedTypeReference<List<ArtistGenreRecord>>() {
+				});
+
+			if (raw == null || raw.isEmpty() || raw.get(0) == null) {
+				return new ArtistGenreRecord(spotifyArtistId, List.of());
+			}
+
+			List<String> cleaned = (raw.get(0).genres() == null ? List.<String>of() : raw.get(0).genres()).stream()
+				.filter(Objects::nonNull)
+				.map(String::trim)
+				.filter(s -> !s.isBlank())
+				.distinct()
+				.limit(3)
+				.toList();
+
+			return new ArtistGenreRecord(spotifyArtistId, cleaned);
+
 		}
 		catch (Exception e) {
-			log.error("AI 장르 추출 중 오류 발생: ", e);
-			return List.of();
+			log.error("장르 분류 실패(artist={}): {}", artistName, e.getMessage(), e);
+			return new ArtistGenreRecord(spotifyArtistId, List.of());
 		}
 	}
 
