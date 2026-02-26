@@ -10,8 +10,8 @@ POST {{server}}/auth/register
 Content-Type: {{json}}
 
 {
-  "username": "h4vrut4",
-  "password": "H$VRUT$",
+  "username": "a",
+  "password": "a",
   "signupToken": "valid"
 }
 

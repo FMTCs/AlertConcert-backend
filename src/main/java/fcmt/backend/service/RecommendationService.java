@@ -1,9 +1,6 @@
 package fcmt.backend.service;
 
-import fcmt.backend.dto.ArtistItemDto;
-import fcmt.backend.dto.RecommendResponseDto;
-import fcmt.backend.dto.SpotifyTokenResponseDto;
-import fcmt.backend.dto.SpotifyTopArtistsResponseDto;
+import fcmt.backend.dto.*;
 import fcmt.backend.entity.Artist;
 import fcmt.backend.entity.Concert;
 import fcmt.backend.entity.User;
@@ -57,101 +54,96 @@ public class RecommendationService {
 
 	@Transactional(readOnly = true)
 	public RecommendResponseDto getRecommendation(String token) {
+		// 1. 유저 선호도 조회
 		Long userId = jwtTokenProvider.parseClaimsAllowExpired(token).get("uid", Long.class);
 		UserPreference preference = userPreferenceRepository.findById(userId)
 			.orElseThrow(() -> new BusinessException(ErrorCode.USER_PREFERENCE_NOT_FOUND));
 
 		List<Long> preferredIds = preference.getArtistIds();
 		if (preferredIds == null || preferredIds.isEmpty()) {
-			return RecommendResponseDto.builder()
-				.topArtists(List.of())
-				.topGenres(List.of())
-				.recommendedConcerts(List.of())
-				.build();
+			return RecommendResponseDto.builder().topArtists(List.of()).topGenres(List.of()).recommendedConcerts(List.of()).build();
 		}
 
-		// 1. 선호 아티스트 상세 정보 조회
+		// 2. 선호 아티스트 상세 조회
 		List<Artist> preferredArtists = artistRepository.findAllById(preferredIds);
 
-		// 2. 장르 빈도수 계산 및 Top Genres 추출
-		Map<String, Long> genreFreqMap = preferredArtists.stream()
-			.flatMap(a -> a.getGenres().stream())
-			.collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
+		// 3. 유저 취향 계층별 분석
+		Map<String, Long> specificFreq = new HashMap<>();
+		Map<String, Long> categoryFreq = new HashMap<>();
+		Map<String, Long> domainFreq = new HashMap<>();
 
-		List<RecommendResponseDto.GenreDto> topGenres = genreFreqMap.entrySet()
-			.stream()
-			.sorted(Map.Entry.<String, Long>comparingByValue().reversed()) // 많이 나타난 순서대로
-			.limit(5) // 상위 10개
-			.map(entry -> RecommendResponseDto.GenreDto.builder().name(entry.getKey()).build())
-			.toList();
+		for (Artist artist : preferredArtists) {
+			Set<String> categoriesForArtist = new HashSet<>();
+			Set<String> domainsForArtist = new HashSet<>();
 
-		// 3. 확장 추천을 위한 검색용 장르 리스트 (상위 5개 정도만 활용)
-		List<String> searchGenres = topGenres.stream().map(RecommendResponseDto.GenreDto::getName).toList();
+			for (String specific : artist.getGenres()) {
+				specificFreq.put(specific, specificFreq.getOrDefault(specific, 0L) + 1);
+				GenreMapper.GenreInfo info = GenreMapper.getInfo(specific);
+				if (!info.getCategory().equals("Unknown")) categoriesForArtist.add(info.getCategory());
+				if (!info.getDomain().equals("Unknown")) domainsForArtist.add(info.getDomain());
+			}
+			// 아티스트당 중/대분류는 1회만 카운트
+			categoriesForArtist.forEach(c -> categoryFreq.put(c, categoryFreq.getOrDefault(c, 0L) + 1));
+			domainsForArtist.forEach(d -> domainFreq.put(d, domainFreq.getOrDefault(d, 0L) + 1));
+		}
 
-		// 4. 공연 검색 (선호 가수 포함 OR 선호 장르 포함)
-		Long[] preferredIdsArray = preferredIds.toArray(new Long[0]);
-		String[] searchGenresArray = searchGenres.toArray(new String[0]);
+		// 4. 상위 10개 소분류 추출 (DB 검색용)
+		List<RecommendResponseDto.GenreDto> topGenreDtos = specificFreq.entrySet().stream()
+				.sorted(Map.Entry.<String, Long>comparingByValue().reversed())
+				.limit(10)
+				.map(e -> RecommendResponseDto.GenreDto.builder().name(e.getKey()).build()).toList();
 
-		List<Concert> matchedConcerts = concertRepository.findRecommendedConcerts(preferredIdsArray, searchGenresArray);
+		// 5. 공연 검색
+		List<Concert> matchedConcerts = concertRepository.findRecommendedConcerts(
+				preferredIds.toArray(new Long[0]),
+				topGenreDtos.stream().map(RecommendResponseDto.GenreDto::getName).toArray(String[]::new)
+		);
 
-		// [최적화] 5-1. 매칭된 모든 공연의 출연진 ID를 중복 없이 수집
+		// 6. 데이터 최적화 로딩
 		Set<Long> allCastIds = matchedConcerts.stream().flatMap(c -> c.getCasts().stream()).collect(Collectors.toSet());
+		Map<Long, Artist> artistMap = artistRepository.findAllById(allCastIds).stream()
+				.collect(Collectors.toMap(Artist::getArtistId, Function.identity()));
 
-		// [최적화] 5-2. 필요한 아티스트 정보 한 번에 조회 (In-Query)
-		Map<Long, Artist> artistMap = artistRepository.findAllById(allCastIds)
-			.stream()
-			.collect(Collectors.toMap(Artist::getArtistId, Function.identity()));
+		// 7. 분모 계산 (유저 총 취향 무게)
+		double userTotalWeight = (specificFreq.values().stream().mapToLong(Long::longValue).sum() * 0.5)
+				+ (categoryFreq.values().stream().mapToLong(Long::longValue).sum() * 0.3)
+				+ (domainFreq.values().stream().mapToLong(Long::longValue).sum() * 0.2);
 
-		// 5-3. 추천 점수 및 DTO 변환
-		long totalUserGenreCount = Math.max(1, preferredArtists.stream().mapToLong(a -> a.getGenres().size()).sum());
-
-		List<RecommendResponseDto.ConcertDto> concertDtos = matchedConcerts.stream().map(c -> {
-			// [수정] ID 리스트를 Artist 객체 리스트로 변환
-			List<Artist> casts = c.getCasts().stream().map(artistMap::get).filter(Objects::nonNull).toList();
-
-			// [추가] 아티스트 객체에서 이름만 추출
-			List<String> castNames = casts.stream().map(Artist::getArtistName).toList();
-
-			List<String> concertGenres = casts.stream().flatMap(a -> a.getGenres().stream()).distinct().toList();
-
-			// 매칭 점수 계산 로직
-			double totalScore;
-
-			// 1. 장르 점수 (최대 0.5)
-			double genreScore = (concertGenres.stream().mapToDouble(g -> genreFreqMap.getOrDefault(g, 0L)).sum()
-					/ (double) totalUserGenreCount) * 0.5;
-
-			// 2. 아티스트 가점 (최대 0.5)
-			boolean isFavoriteArtist = c.getCasts().stream().anyMatch(preferredIds::contains);
-			double artistScore = isFavoriteArtist ? 0.5 : 0.0;
-
-			totalScore = genreScore + artistScore;
-
-			// 3. 매칭률 계산 (0점부터 시작하거나 기본 점수를 낮춤)
-			// 40점(기본) + 60점(취향 반영)
-			int matchingRate = (int) Math.round(50 + (totalScore * 50));
-
-			return RecommendResponseDto.ConcertDto.builder()
-				.concertName(c.getConcertName())
-				.casts(castNames) // [수정] List<Long> 대신 List<String> 대입
-				.genres(concertGenres)
-				.posterImgUrl(c.getPosterImgUrl())
-				.bookingUrl(c.getBookingUrl())
-				.matchingRate(Math.min(100, matchingRate))
-				.build();
-		}).sorted(Comparator.comparingInt(RecommendResponseDto.ConcertDto::getMatchingRate).reversed()).toList();
-
-		// 6. 결과 조립 (동일)
+		// 8. 공연별 점수 계산
 		return RecommendResponseDto.builder()
-			.topArtists(preferredArtists.stream()
-				.map(a -> RecommendResponseDto.ArtistDto.builder()
-					.name(a.getArtistName())
-					.artistId(a.getSpotifyArtistId())
-					.build())
-				.toList())
-			.topGenres(topGenres)
-			.recommendedConcerts(concertDtos)
-			.build();
+				.topArtists(preferredArtists.stream().map(a -> RecommendResponseDto.ArtistDto.builder().name(a.getArtistName()).artistId(a.getSpotifyArtistId()).build()).toList())
+				.topGenres(topGenreDtos)
+				.recommendedConcerts(matchedConcerts.stream().map(c -> {
+					List<Artist> casts = c.getCasts().stream().map(artistMap::get).filter(Objects::nonNull).toList();
+
+					Set<String> cSpecs = new HashSet<>();
+					Set<String> cCats = new HashSet<>();
+					Set<String> cDoms = new HashSet<>();
+
+					for (Artist cast : casts) {
+						for (String s : cast.getGenres()) {
+							cSpecs.add(s);
+							GenreMapper.GenreInfo info = GenreMapper.getInfo(s);
+							cCats.add(info.getCategory());
+							cDoms.add(info.getDomain());
+						}
+					}
+
+					double matchWeight = 0.0;
+					for (String s : cSpecs) matchWeight += specificFreq.getOrDefault(s, 0L) * 0.5;
+					for (String cat : cCats) matchWeight += categoryFreq.getOrDefault(cat, 0L) * 0.3;
+					for (String dom : cDoms) matchWeight += domainFreq.getOrDefault(dom, 0L) * 0.2;
+
+					double genreScore = Math.min(1.0, matchWeight / Math.max(1.0, userTotalWeight));
+					boolean isFav = c.getCasts().stream().anyMatch(preferredIds::contains);
+					int matchingRate = (int) Math.round(50 + ((genreScore * 0.5 + (isFav ? 0.5 : 0.0)) * 50));
+
+					return RecommendResponseDto.ConcertDto.builder()
+							.concertName(c.getConcertName()).matchingRate(Math.min(100, matchingRate))
+							.casts(casts.stream().map(Artist::getArtistName).toList())
+							.genres(cSpecs.stream().limit(3).toList()).build();
+				}).sorted(Comparator.comparingInt(RecommendResponseDto.ConcertDto::getMatchingRate).reversed()).toList())
+				.build();
 	}
 
 	@Transactional
