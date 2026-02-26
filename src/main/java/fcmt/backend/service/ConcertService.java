@@ -97,7 +97,7 @@ public class ConcertService {
 
 				if (listResponse != null && listResponse.getConcertList() != null) {
 					for (KopisListResponse.KopisListDto listDto : listResponse.getConcertList()) {
-						if (processedDetails >= 10) { // TODO: need to remove
+						if (processedDetails >= 100) { // TODO: need to remove
 							break outer;
 						}
 						try {

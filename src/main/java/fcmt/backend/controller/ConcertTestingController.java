@@ -64,10 +64,8 @@ public class ConcertTestingController {
 		List<Long> changedConcertIds = concertService.syncKopisData();
 		var extracted = concertService.extractArtistsInfosWithAI(changedConcertIds);
 
-		// TODO3 적용: artists upsert + concerts.casts 업데이트
 		List<Long> genreTargetArtistIds = concertCastApplyService.applyExtracted(extracted);
 
-		// TODO4 적용: genres 분류 + artists.genres 업데이트
 		artistGenreService.classifyAndUpdateGenres(genreTargetArtistIds);
 
 		return ResponseEntity.ok(Map.of("changedCount", changedConcertIds.size(), "extractedCount", extracted.size(),

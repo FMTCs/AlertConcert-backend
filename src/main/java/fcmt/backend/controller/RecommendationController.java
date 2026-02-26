@@ -25,8 +25,8 @@ public class RecommendationController {
 	@PostMapping("/interest")
 	public ResponseEntity<RecommendResponseDto> interest(@RequestHeader("Authorization") String authHeader) {
 		String accessToken = authHeader.substring(7);
-		RecommendResponseDto response = recommendationService.updatePreference(accessToken);
-
+		recommendationService.updatePreference(accessToken);
+		RecommendResponseDto response = recommendationService.getRecommendation(accessToken);
 		return ResponseEntity.ok(response);
 	}
 
