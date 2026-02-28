@@ -53,180 +53,243 @@ public class RecommendationService {
 
 	private final RestTemplate restTemplate = new RestTemplate();
 
+	private record UserTaste(Map<String, Double> specificFreq, Map<String, Double> categoryFreq) {
+	}
+
+	@Transactional(readOnly = true)
 	public RecommendResponseDto getRecommendation(String token) {
-		// 1. 유저 및 선호 아티스트 조회
+		// 1. 유저 선호 아티스트 로드
+		List<Long> preferredIds = getPreferredIds(token);
+		if (preferredIds == null || preferredIds.isEmpty()) {
+			return emptyRecommendResponse();
+		}
+
+		Map<Long, Artist> preferredArtistMap = getPreferredArtistMap(preferredIds);
+
+		// 2. 유저 취향 분석
+		UserTaste analysis = analyzeUserTaste(preferredIds, preferredArtistMap);
+
+		// 3. 공연 검색
+		List<Concert> matchedConcerts = searchConcerts(preferredIds, analysis.categoryFreq());
+
+		// 4. 공연 DTO 변환
+		List<RecommendResponseDto.ConcertDto> concertDtos = convertToConcertDtos(matchedConcerts, preferredIds,
+				analysis);
+
+		// 5. 최종 응답 조립
+		return RecommendResponseDto.builder()
+			.topArtists(preferredArtistsByOrder(preferredIds, preferredArtistMap))
+			.topGenres(getTopGenres(analysis.specificFreq()))
+			.recommendedConcerts(concertDtos)
+			.build();
+	}
+
+	private List<Long> getPreferredIds(String token) {
 		Long userId = jwtTokenProvider.parseClaimsAllowExpired(token).get("uid", Long.class);
 		UserPreference preference = userPreferenceRepository.findById(userId)
 			.orElseThrow(() -> new BusinessException(ErrorCode.USER_PREFERENCE_NOT_FOUND));
 
-		List<Long> preferredIds = preference.getArtistIds();
-		if (preferredIds == null || preferredIds.isEmpty()) {
-			return RecommendResponseDto.builder()
-				.topArtists(List.of())
-				.topGenres(List.of())
-				.recommendedConcerts(List.of())
-				.build();
-		}
+		return preference.getArtistIds();
+	}
 
-		List<Artist> preferredArtists = artistRepository.findAllById(preferredIds);
+	// 유저 취향 장르 가중치 계산
+	private UserTaste analyzeUserTaste(List<Long> preferredIds, Map<Long, Artist> artistMap) {
+		Map<String, Double> specificFreq = new HashMap<>();
+		Map<String, Double> categoryFreq = new HashMap<>();
+		int totalCount = preferredIds.size();
 
-		// 2. 취향 분석 (중분류/소분류 빈도 계산)
-		Map<String, Long> specificFreq = new HashMap<>(); // "Idol_Concepts/Teen_Fresh"
-		Map<String, Long> categoryFreq = new HashMap<>(); // "Idol_Concepts"
+		for (int i = 0; i < totalCount; i++) {
+			Artist artist = artistMap.get(preferredIds.get(i));
+			if (artist == null)
+				continue;
 
-		for (Artist artist : preferredArtists) {
+			double rankWeight = (double) totalCount - i;
 			Set<String> artistCategories = new HashSet<>();
+
 			for (String genreFull : artist.getGenres()) {
-				specificFreq.put(genreFull, specificFreq.getOrDefault(genreFull, 0L) + 1);
-
-				String category = genreFull.split("/")[0]; // "/" 기준 앞부분 추출
-				artistCategories.add(category);
+				if (!genreFull.contains("/"))
+					continue;
+				specificFreq.put(genreFull, specificFreq.getOrDefault(genreFull, 0.0) + rankWeight);
+				artistCategories.add(genreFull.split("/")[0]);
 			}
-			// 가수당 중분류 가중치는 1회만 합산
-			artistCategories.forEach(cat -> categoryFreq.put(cat, categoryFreq.getOrDefault(cat, 0L) + 1));
+			artistCategories.forEach(cat -> categoryFreq.put(cat, categoryFreq.getOrDefault(cat, 0.0) + rankWeight));
 		}
+		return new UserTaste(specificFreq, categoryFreq);
+	}
 
-		// 3. 검색 키워드 생성 (상위 5개 중분류 기반 LIKE 패턴)
+	// 유저 선호 가수/장르와 일치하는 공연 검색
+	private List<Concert> searchConcerts(List<Long> preferredIds, Map<String, Double> categoryFreq) {
 		List<String> searchPatterns = categoryFreq.entrySet()
 			.stream()
-			.sorted(Map.Entry.<String, Long>comparingByValue().reversed())
+			.sorted(Map.Entry.<String, Double>comparingByValue().reversed())
 			.limit(5)
-			.map(e -> e.getKey() + "/%") // "중분류/%" 형태로 변환
+			.map(e -> e.getKey() + "/%")
 			.toList();
 
-		// 4. 공연 검색
-		List<Concert> matchedConcerts = concertRepository.findRecommendedByCategories(preferredIds.toArray(new Long[0]),
+		return concertRepository.findRecommendedByCategories(preferredIds.toArray(new Long[0]),
 				searchPatterns.toArray(new String[0]));
+	}
 
-		// 출연진 정보 캐싱 (성능 최적화)
-		Set<Long> allCastIds = matchedConcerts.stream().flatMap(c -> c.getCasts().stream()).collect(Collectors.toSet());
-		Map<Long, Artist> artistMap = artistRepository.findAllById(allCastIds)
-			.stream()
-			.collect(Collectors.toMap(Artist::getArtistId, Function.identity()));
+	// 공연 리스트를 DTO 리스트로 변환
+	private List<RecommendResponseDto.ConcertDto> convertToConcertDtos(List<Concert> concerts, List<Long> preferredIds,
+			UserTaste taste) {
 
-		List<RecommendResponseDto.ConcertDto> concertDtos = matchedConcerts.stream().map(c -> {
+		// 출연진 캐싱
+		Map<Long, Artist> artistMap = getAllArtistMapInConcerts(concerts);
+
+		return concerts.stream().map(c -> {
 			List<Artist> casts = c.getCasts().stream().map(artistMap::get).filter(Objects::nonNull).toList();
 
 			Set<String> cSpecs = new HashSet<>();
 			Set<String> cCats = new HashSet<>();
-			for (Artist cast : casts) {
-				for (String g : cast.getGenres()) {
-					cSpecs.add(g);
-					cCats.add(g.split("/")[0]);
-				}
-			}
+			extractGenres(casts, cSpecs, cCats);
 
-			// 1. 장르별 일치 가중치 합산
-			double matchWeight = 0.0;
-
-			for (String s : cSpecs) {
-				if (specificFreq.containsKey(s)) {
-					matchWeight += specificFreq.get(s) * 1.5; // 소분류 일치시 강력 가점
-				}
-			}
-			for (String cat : cCats) {
-				if (categoryFreq.containsKey(cat)) {
-					matchWeight += categoryFreq.get(cat) * 0.7; // 중분류 일치 가점
-				}
-			}
-
-			double genreScore = Math.min(1.0, matchWeight / 15.0); // 15점만 넘어도 장르 점수
-																	// 만점(1.0)
-			genreScore = Math.pow(genreScore, 0.5); // 루트를 씌워 하위권 점수를 상향 평준화
-
-			// 3. 최종 점수 조립 (기본 50 + 장르 35 + 선호아티스트 15)
-			boolean isFavorite = c.getCasts().stream().anyMatch(preferredIds::contains);
-			int matchingRate;
-
-			if (isFavorite) {
-				matchingRate = 95;
-			}
-			else {
-				matchingRate = (int) Math.round(50 + (genreScore * 35));
-			}
-
-			matchingRate = Math.min(100, matchingRate);
+			int matchingRate = calculateMatchingRate(cSpecs, cCats, taste, preferredIds, c);
 
 			return RecommendResponseDto.ConcertDto.builder()
 				.concertName(c.getConcertName())
 				.casts(casts.stream().map(Artist::getArtistName).toList())
-				.genres(cSpecs.stream().map(s -> s.split("/")[1]).toList()) // 소분류만 노출
-				.matchingRate(Math.min(100, matchingRate))
+				.genres(cSpecs.stream().map(s -> s.split("/")[1]).toList())
+				.matchingRate(matchingRate)
 				.posterImgUrl(c.getPosterImgUrl())
 				.bookingUrl(c.getBookingUrl())
 				.build();
 		}).sorted(Comparator.comparingInt(RecommendResponseDto.ConcertDto::getMatchingRate).reversed()).toList();
+	}
 
+	// 각 가수로부터 장르 추출
+	private void extractGenres(List<Artist> casts, Set<String> specs, Set<String> cats) {
+		for (Artist cast : casts) {
+			for (String g : cast.getGenres()) {
+				if (g.contains("/")) {
+					specs.add(g);
+					cats.add(g.split("/")[0]);
+				}
+			}
+		}
+	}
+
+	// 선호 가수 추출
+	private Map<Long, Artist> getPreferredArtistMap(List<Long> ids) {
+		return artistRepository.findAllById(ids)
+			.stream()
+			.collect(Collectors.toMap(Artist::getArtistId, Function.identity()));
+	}
+
+	// 공연의 출연 가수 추출
+	private Map<Long, Artist> getAllArtistMapInConcerts(List<Concert> concerts) {
+		Set<Long> allCastIds = concerts.stream().flatMap(c -> c.getCasts().stream()).collect(Collectors.toSet());
+		return artistRepository.findAllById(allCastIds)
+			.stream()
+			.collect(Collectors.toMap(Artist::getArtistId, Function.identity()));
+	}
+
+	// 빈 DTO 반환
+	private RecommendResponseDto emptyRecommendResponse() {
 		return RecommendResponseDto.builder()
-			.topArtists(preferredArtists.stream()
-				.map(a -> RecommendResponseDto.ArtistDto.builder().name(a.getArtistName()).build())
-				.toList())
-			.topGenres(specificFreq.entrySet()
-				.stream()
-				.sorted(Map.Entry.<String, Long>comparingByValue().reversed())
-				.limit(5)
-				.map(e -> RecommendResponseDto.GenreDto.builder()
-					.name(e.getKey().split("/")[1]) // 소분류만 추출
-					.build())
-				.toList())
-			.recommendedConcerts(concertDtos) // 이미 빌더로 생성된 리스트
+			.topArtists(List.of())
+			.topGenres(List.of())
+			.recommendedConcerts(List.of())
 			.build();
+	}
+
+	// 매칭률 계산
+	private int calculateMatchingRate(Set<String> cSpecs, Set<String> cCats, UserTaste usertaste,
+			List<Long> preferredIds, Concert c) {
+		List<Double> genreMatchScores = new ArrayList<>();
+
+		for (String s : cSpecs) {
+			double score = usertaste.specificFreq.getOrDefault(s, 0.0) * 0.5; // 소분류 가중치
+			if (score > 0)
+				genreMatchScores.add(score);
+		}
+		for (String cat : cCats) {
+			double score = usertaste.categoryFreq.getOrDefault(cat, 0.0) * 0.1; // 중분류 가중치
+			if (score > 0)
+				genreMatchScores.add(score);
+		}
+
+		// 점수가 높은 장르 3개만 합산
+		double topMatchWeight = genreMatchScores.stream()
+			.sorted(Comparator.reverseOrder())
+			.limit(3)
+			.mapToDouble(Double::doubleValue)
+			.sum();
+
+		double genreScore = Math.min(1.0, topMatchWeight / 400.0);
+
+		boolean isFavorite = c.getCasts().stream().anyMatch(preferredIds::contains);
+		int matchingRate;
+
+		if (isFavorite)
+			matchingRate = (int) Math.round(90 + (genreScore * 10)); // 선호 아티스트가 있는 경우
+		else
+			matchingRate = (int) Math.round(40 + (genreScore * 55)); // 선호 아티스트가 없는 경우
+
+		return matchingRate;
+	}
+
+	// 선호하는 아티스트 5명 반환
+	private List<RecommendResponseDto.ArtistDto> preferredArtistsByOrder(List<Long> ids, Map<Long, Artist> map) {
+		return ids.stream()
+			.filter(map::containsKey)
+			.limit(5)
+			.map(id -> RecommendResponseDto.ArtistDto.builder().name(map.get(id).getArtistName()).build())
+			.toList();
+	}
+
+	// 선호하는 장르 5개 반환
+	private List<RecommendResponseDto.GenreDto> getTopGenres(Map<String, Double> freq) {
+		return freq.entrySet()
+			.stream()
+			.sorted(Map.Entry.<String, Double>comparingByValue().reversed())
+			.limit(5)
+			.map(e -> RecommendResponseDto.GenreDto.builder().name(e.getKey().split("/")[1]).build())
+			.toList();
 	}
 
 	@Transactional
 	public void updatePreference(String token) {
 		try {
-			Long userId = jwtTokenProvider.parseClaimsAllowExpired(token).get("uid", Long.class);
-			User user = userRepository.findById(userId)
-				.orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+			// 1. 유저 및 Spotify 액세스 토큰 준비
+			User user = getUserByToken(token);
+			String accessToken = refreshAccessToken(user.getSpotifyRefreshTokenEnc());
 
-			String refreshToken = user.getSpotifyRefreshTokenEnc();
-			String accessToken = refreshAccessToken(refreshToken);
+			// 2. Spotify 데이터 가져오기
+			List<ArtistItemDto> spotifyItems = getTopArtists(accessToken);
+			if (spotifyItems == null || spotifyItems.isEmpty())
+				return;
 
-			List<ArtistItemDto> items = getTopArtists(accessToken);
-			List<Long> artistPrimaryIds = new ArrayList<>();
+			// AI 분류가 필요한 ID들만 담을 리스트 생성
+			List<Long> needsAiClassification = new ArrayList<>();
 
-			if (items != null && !items.isEmpty()) {
-				for (ArtistItemDto item : items) {
-					String spotifyId = item.getId();
-					String name = item.getName();
-					List<String> spotifyGenres = item.getGenres();
+			// 3. 아티스트 정보 DB 동기화 및 ID 추출
+			List<Long> artistPrimaryIds = syncArtistsWithDb(spotifyItems, needsAiClassification);
 
-					Artist artist = artistRepository.findBySpotifyArtistId(spotifyId).map(existing -> {
-						existing.setArtistName(name);
-						return existing;
-					})
-						.orElseGet(() -> artistRepository.save(Artist.builder()
-							.spotifyArtistId(spotifyId)
-							.artistName(name)
-							.genres(spotifyGenres)
-							.build()));
-					artistPrimaryIds.add(artist.getArtistId());
-				}
-
-				artistGenreService.classifyAndUpdateGenres(artistPrimaryIds);
+			// 4. AI 장르 분류 서비스 호출
+			if (!needsAiClassification.isEmpty()) {
+				artistGenreService.classifyAndUpdateGenres(needsAiClassification);
 			}
 
-			UserPreference preference = userPreferenceRepository.findById(userId)
-				.orElseGet(() -> userPreferenceRepository.save(UserPreference.builder()
-					.user(user)
-					.artistIds(new ArrayList<>())
-					.updatedAt(OffsetDateTime.now())
-					.build()));
-
-			preference.setArtistIds(artistPrimaryIds);
-			preference.setUpdatedAt(OffsetDateTime.now());
+			// 5. 유저 최종 선호도 정보 업데이트
+			saveUserPreference(user, artistPrimaryIds);
 
 		}
 		catch (HttpClientErrorException.Unauthorized e) {
 			throw new BusinessException(ErrorCode.SESSION_EXPIRED);
 		}
 		catch (Exception e) {
-			log.error("Preference Update Error: ", e);
-			throw new RuntimeException(e);
+			throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "데이터 동기화 중 오류가 발생했습니다.");
 		}
 	}
 
+	// 유저 정보 조회
+	private User getUserByToken(String token) {
+		Long userId = jwtTokenProvider.parseClaimsAllowExpired(token).get("uid", Long.class);
+		return userRepository.findById(userId).orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+	}
+
+	// AccessToken 재발급
 	public String refreshAccessToken(String refreshToken) {
 		String tokenUrl = "https://accounts.spotify.com/api/token";
 
@@ -271,8 +334,9 @@ public class RecommendationService {
 		}
 	}
 
+	// 선호 아티스트 가져오기
 	public List<ArtistItemDto> getTopArtists(String accessToken) {
-		String url = "https://api.spotify.com/v1/me/top/artists?time_range=medium_term&limit=50";
+		String url = "https://api.spotify.com/v1/me/ㄱtop/artists?time_range=medium_term&limit=50";
 
 		// 헤더 설정
 		HttpHeaders headers = new HttpHeaders();
@@ -283,6 +347,53 @@ public class RecommendationService {
 				SpotifyTopArtistsResponseDto.class);
 
 		return Objects.requireNonNull(response.getBody()).getItems();
+	}
+
+	// artists DB 업데이트
+	private List<Long> syncArtistsWithDb(List<ArtistItemDto> items, List<Long> needsAiClassification) {
+		List<Long> allArtistPrimaryIds = new ArrayList<>();
+
+		for (ArtistItemDto item : items) {
+			Artist artist = artistRepository.findBySpotifyArtistId(item.getId()).map(existing -> {
+				existing.setArtistName(item.getName());
+				return existing;
+			})
+				.orElseGet(() -> artistRepository.save(Artist.builder()
+					.spotifyArtistId(item.getId())
+					.artistName(item.getName())
+					.genres(item.getGenres()) // 초기에는 Spotify 장르 저장
+					.build()));
+
+			allArtistPrimaryIds.add(artist.getArtistId());
+
+			// AI 분류가 필요한지 체크
+			if (shouldClassifyWithAi(artist)) {
+				needsAiClassification.add(artist.getArtistId());
+			}
+		}
+		return allArtistPrimaryIds;
+	}
+
+	// AI를 사용해야 하는지 확인
+	private boolean shouldClassifyWithAi(Artist artist) {
+		List<String> currentGenres = artist.getGenres();
+
+		// 1. 장르 데이터가 아예 없는 경우
+		if (currentGenres == null || currentGenres.isEmpty())
+			return true;
+
+		// 2. 장르에 우리가 정의한 구분자("/")가 하나도 없는 경우 (Spotify 원시 데이터인 상태)
+		return currentGenres.stream().noneMatch(g -> g.contains("/"));
+	}
+
+	// 유저 선호도 저장
+	private void saveUserPreference(User user, List<Long> artistIds) {
+		UserPreference preference = userPreferenceRepository.findById(user.getUid())
+			.orElseGet(() -> userPreferenceRepository
+				.save(UserPreference.builder().user(user).artistIds(new ArrayList<>()).build()));
+
+		preference.setArtistIds(artistIds);
+		preference.setUpdatedAt(OffsetDateTime.now());
 	}
 
 }

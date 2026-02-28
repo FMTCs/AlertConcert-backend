@@ -6,7 +6,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -17,13 +16,8 @@ public interface ConcertRepository extends JpaRepository<Concert, Long> {
 
 	@Query(value = "SELECT DISTINCT c.* FROM concerts c " + "JOIN artists a ON a.artist_id = ANY(c.casts) "
 			+ "WHERE c.casts && :preferredIds " + // 1. 선호 가수 포함 공연
-			"OR EXISTS (" + "    SELECT 1 FROM unnest(a.genres) AS g " + "    WHERE g ILIKE ANY(ARRAY[:categories])" + // 2.
-																														// 중분류
-																														// 패턴
-																														// 매칭
-																														// (대소문자
-																														// 무시)
-			")", nativeQuery = true)
+			"OR EXISTS (" + "    SELECT 1 FROM unnest(a.genres) AS g " + "    WHERE g ILIKE ANY(ARRAY[:categories]))",
+			nativeQuery = true)
 	List<Concert> findRecommendedByCategories(@Param("preferredIds") Long[] preferredIds,
 			@Param("categories") String[] categories);
 
