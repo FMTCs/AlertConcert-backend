@@ -56,25 +56,23 @@ public class AuthService {
 	}
 
 	@Transactional // 원자성 보장을 위해서 추가
-	public void register(RegisterRequestDto request) {
+	public RegisterResponseDto register(RegisterRequestDto request) {
 
 		// 1. username 중복 검사
 		validateDuplicateUsername(request.getUsername());
 
-		// 2. [TODO] 비밀번호 처리 -> 해싱을 어디서 하느냐? + 보안성 검사 + 비밀번호 확인
-		// 알던 gemini 왈 service 단에서 처리하는게 맞다고 해서 구현은 해두는 느낌으로 그럼 여기에서 비밀번호 확인이랑 보안성도 검사하는거
-		// 아닐까?
+		// 2. 비밀번호 유효성 검사 + 일치 확인
+		validatePassword(request.getPassword(), request.getPasswordConfirm());
+
+		// 3. 비밀번호 해싱
 		String encodedPassword = passwordEncoder.encode(request.getPassword());
 
-		// 3. Redis의 signupToken을 가지고 있을 때, User table에 채울 정보 가져오기
+		// 4. Redis의 signupToken을 가지고 있을 때, User table에 채울 정보 가져오기
 		Map<Object, Object> registerDatas = signupTokenRepository.find(request.getSignupToken());
-
-		// 4. Redis에서 토큰이 없다면 유효하지 않다면 에러 처리
 		if (registerDatas == null || registerDatas.isEmpty()) {
 			throw new BusinessException(ErrorCode.SESSION_EXPIRED);
 		}
 
-		// 5. spotifyRefreshToken 및 spotifyUserId 가져오기 [TODO] RefreshToken 암호화하기
 		String spotifyRefreshToken = (String) registerDatas.get("spotifyRefreshToken");
 		String spotifyUserId = (String) registerDatas.get("spotifyUserId");
 
@@ -83,12 +81,13 @@ public class AuthService {
 			.username(request.getUsername())
 			.password(encodedPassword)
 			.spotifyUserId(spotifyUserId)
-			.spotifyRefreshTokenEnc(spotifyRefreshToken) // [TODO] RefreshToken 암호화하기
+			.spotifyRefreshTokenEnc(spotifyRefreshToken) // converter에 의해서 자동으로 암호화
 			.valid(true)
 			.build();
 
 		// 7. DB에 저장
 		userRepository.save(user);
+		return RegisterResponseDto.success();
 	}
 
 	public RefreshResponseDto refresh(String token) {
@@ -136,6 +135,13 @@ public class AuthService {
 	private void validateDuplicateUsername(String username) {
 		if (userRepository.existsByUsername(username)) {
 			throw new BusinessException(ErrorCode.DUPLICATE_USER);
+		}
+	}
+
+	private void validatePassword(String password, String passwordConfirm) {
+		// 비밀번호 일치 여부 -> 다른 검증은 Dto 에서 처리 후 넘어옴
+		if (!password.equals(passwordConfirm)) {
+			throw new BusinessException(ErrorCode.PASSWORD_MISMATCH);
 		}
 	}
 
