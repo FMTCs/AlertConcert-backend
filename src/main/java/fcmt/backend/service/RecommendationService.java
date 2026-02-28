@@ -148,6 +148,7 @@ public class RecommendationService {
 
 			return RecommendResponseDto.ConcertDto.builder()
 				.concertName(c.getConcertName())
+				.concertLocation(c.getConcertLocation())
 				.casts(casts.stream().map(Artist::getArtistName).toList())
 				.genres(cSpecs.stream().map(s -> s.split("/")[1]).toList())
 				.matchingRate(matchingRate)
@@ -279,7 +280,7 @@ public class RecommendationService {
 			throw new BusinessException(ErrorCode.SESSION_EXPIRED);
 		}
 		catch (Exception e) {
-			throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "데이터 동기화 중 오류가 발생했습니다.");
+			throw new RuntimeException(e);
 		}
 	}
 
@@ -336,7 +337,7 @@ public class RecommendationService {
 
 	// 선호 아티스트 가져오기
 	public List<ArtistItemDto> getTopArtists(String accessToken) {
-		String url = "https://api.spotify.com/v1/me/ㄱtop/artists?time_range=medium_term&limit=50";
+		String url = "https://api.spotify.com/v1/me/top/artists?time_range=medium_term&limit=50";
 
 		// 헤더 설정
 		HttpHeaders headers = new HttpHeaders();
