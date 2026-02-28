@@ -97,7 +97,7 @@ public class ConcertService {
 
 				if (listResponse != null && listResponse.getConcertList() != null) {
 					for (KopisListResponse.KopisListDto listDto : listResponse.getConcertList()) {
-						if (processedDetails >= 100) { // TODO: need to remove
+						if (processedDetails >= 10) { // TODO: need to remove
 							break outer;
 						}
 						try {
@@ -153,11 +153,12 @@ public class ConcertService {
 		LocalDate startDate = LocalDate.parse(dto.getPrfpdfrom().replace(".", "-"));
 		LocalDate endDate = LocalDate.parse(dto.getPrfpdto().replace(".", "-"));
 		String currentBookingUrl = dto.getRelates() != null ? dto.getRelates().getFirstUrl() : null;
+		String currentConcertLocation = dto.getFcltynm();
 
 		if (existingConcert.isPresent()) {
 			Concert concert = existingConcert.get();
 			// 변경을 감지하고, 주요 정보가 전날과 다를 때만 업데이트 수행
-			if (isDataNotChanged(concert, dto, startDate, endDate, currentBookingUrl)) {
+			if (isDataNotChanged(concert, dto, startDate, endDate, currentBookingUrl, currentConcertLocation)) {
 				return Optional.empty();
 			}
 
@@ -165,6 +166,7 @@ public class ConcertService {
 			concert.setBookingUrl(currentBookingUrl);
 			concert.setPerformanceStartDate(startDate);
 			concert.setPerformanceEndDate(endDate);
+			concert.setConcertLocation(currentConcertLocation);
 
 			Concert saved = concertRepository.save(concert);
 			log.info("업데이트 완료: {}", dto.getPrfnm());
@@ -179,6 +181,7 @@ public class ConcertService {
 				.performanceStartDate(startDate)
 				.performanceEndDate(endDate)
 				.bookingUrl(currentBookingUrl)
+				.concertLocation(dto.getFcltynm())
 				.casts(new ArrayList<>()) // casts는 AI로 채울 거라 비움
 				.build();
 
@@ -191,12 +194,13 @@ public class ConcertService {
 
 	// 데이터 변경이 있는지 감지
 	private boolean isDataNotChanged(Concert concert, KopisDetailResponse.KopisDetailDto dto, LocalDate startDate,
-			LocalDate endDate, String bookingUrl) {
+			LocalDate endDate, String bookingUrl, String concertLocation) {
 		return Objects.equals(concert.getConcertName(), dto.getPrfnm())
 				&& Objects.equals(concert.getPosterImgUrl(), dto.getPoster())
 				&& Objects.equals(concert.getPerformanceStartDate(), startDate)
 				&& Objects.equals(concert.getPerformanceEndDate(), endDate)
-				&& Objects.equals(concert.getBookingUrl(), bookingUrl);
+				&& Objects.equals(concert.getBookingUrl(), bookingUrl)
+				&& Objects.equals(concert.getConcertLocation(), concertLocation);
 	}
 
 	//

@@ -28,6 +28,8 @@ public class KopisDetailResponse {
 
 		private String poster; // 포스터URL
 
+		private String fcltynm; // 공연장소
+
 		@JacksonXmlProperty(localName = "relates")
 		private Relates relates; // relatenm 예매처명1 / relateurl 예매처URL1
 
