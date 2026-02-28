@@ -19,7 +19,7 @@ public class ArtistGenreService {
 
 	private final AiClient aiClient;
 
-	@Transactional // 전체를 트랜잭션으로 묶어 변경 감지(Dirty Checking) 활용
+	@Transactional
 	public void classifyAndUpdateGenres(List<Long> artistIds) {
 		if (artistIds == null || artistIds.isEmpty())
 			return;

@@ -20,8 +20,6 @@ public class RecommendResponseDto {
 
 		private String name;
 
-		private String artistId;
-
 	}
 
 	@Getter
