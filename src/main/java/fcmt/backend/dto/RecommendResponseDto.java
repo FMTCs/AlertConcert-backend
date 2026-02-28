@@ -36,6 +36,8 @@ public class RecommendResponseDto {
 
 		private String concertName;
 
+		private String concertLocation;
+
 		private List<String> casts;
 
 		private List<String> genres;

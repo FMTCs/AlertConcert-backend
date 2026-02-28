@@ -3,6 +3,7 @@ package fcmt.backend.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.type.SqlTypes;
 
 import java.time.OffsetDateTime;
@@ -30,6 +31,7 @@ public class UserPreference {
 	@Column(name = "artist_ids", columnDefinition = "bigint[]", nullable = false)
 	private List<Long> artistIds;
 
+	@UpdateTimestamp
 	@Column(name = "updated_at", nullable = false)
 	private OffsetDateTime updatedAt;
 
