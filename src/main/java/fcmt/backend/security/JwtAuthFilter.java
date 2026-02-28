@@ -34,9 +34,6 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
 		String requestUri = request.getRequestURI();
 
-		System.out.println("현재 요청 URI: " + requestUri); // 이 로그가 핵심입니다!
-		System.out.println("허용 여부: " + isPermitUri(requestUri));
-
 		// 1. 인증이 필요 없는 white list의 경우
 		if (isPermitUri(requestUri)) {
 			filterChain.doFilter(request, response);
