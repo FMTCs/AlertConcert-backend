@@ -16,8 +16,8 @@ public interface ConcertRepository extends JpaRepository<Concert, Long> {
 
 	@Query(value = "SELECT DISTINCT c.* FROM concerts c " + "JOIN artists a ON a.artist_id = ANY(c.casts) "
 			+ "WHERE c.casts && :preferredIds " + // 1. 선호 가수 포함 공연
-			"OR EXISTS (" + "    SELECT 1 FROM unnest(a.genres) AS g " + "    WHERE g ILIKE ANY(ARRAY[:categories]))"
-			, nativeQuery = true)
+			"OR EXISTS (" + "    SELECT 1 FROM unnest(a.genres) AS g " + "    WHERE g ILIKE ANY(ARRAY[:categories]))",
+			nativeQuery = true)
 	List<Concert> findRecommendedByCategories(@Param("preferredIds") Long[] preferredIds,
 			@Param("categories") String[] categories);
 

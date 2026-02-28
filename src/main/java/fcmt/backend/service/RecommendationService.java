@@ -53,7 +53,8 @@ public class RecommendationService {
 
 	private final RestTemplate restTemplate = new RestTemplate();
 
-	private record UserTaste(Map<String, Double> specificFreq, Map<String, Double> categoryFreq) {}
+	private record UserTaste(Map<String, Double> specificFreq, Map<String, Double> categoryFreq) {
+	}
 
 	@Transactional(readOnly = true)
 	public RecommendResponseDto getRecommendation(String token) {
@@ -72,20 +73,21 @@ public class RecommendationService {
 		List<Concert> matchedConcerts = searchConcerts(preferredIds, analysis.categoryFreq());
 
 		// 4. 공연 DTO 변환
-		List<RecommendResponseDto.ConcertDto> concertDtos = convertToConcertDtos(matchedConcerts, preferredIds, analysis);
+		List<RecommendResponseDto.ConcertDto> concertDtos = convertToConcertDtos(matchedConcerts, preferredIds,
+				analysis);
 
 		// 5. 최종 응답 조립
 		return RecommendResponseDto.builder()
-				.topArtists(preferredArtistsByOrder(preferredIds, preferredArtistMap))
-				.topGenres(getTopGenres(analysis.specificFreq()))
-				.recommendedConcerts(concertDtos)
-				.build();
+			.topArtists(preferredArtistsByOrder(preferredIds, preferredArtistMap))
+			.topGenres(getTopGenres(analysis.specificFreq()))
+			.recommendedConcerts(concertDtos)
+			.build();
 	}
 
 	private List<Long> getPreferredIds(String token) {
 		Long userId = jwtTokenProvider.parseClaimsAllowExpired(token).get("uid", Long.class);
-        UserPreference preference = userPreferenceRepository.findById(userId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_PREFERENCE_NOT_FOUND));
+		UserPreference preference = userPreferenceRepository.findById(userId)
+			.orElseThrow(() -> new BusinessException(ErrorCode.USER_PREFERENCE_NOT_FOUND));
 
 		return preference.getArtistIds();
 	}
@@ -98,64 +100,61 @@ public class RecommendationService {
 
 		for (int i = 0; i < totalCount; i++) {
 			Artist artist = artistMap.get(preferredIds.get(i));
-			if (artist == null) continue;
+			if (artist == null)
+				continue;
 
 			double rankWeight = (double) totalCount - i;
 			Set<String> artistCategories = new HashSet<>();
 
 			for (String genreFull : artist.getGenres()) {
-				if (!genreFull.contains("/")) continue;
+				if (!genreFull.contains("/"))
+					continue;
 				specificFreq.put(genreFull, specificFreq.getOrDefault(genreFull, 0.0) + rankWeight);
 				artistCategories.add(genreFull.split("/")[0]);
 			}
-			artistCategories.forEach(cat ->
-					categoryFreq.put(cat, categoryFreq.getOrDefault(cat, 0.0) + rankWeight));
+			artistCategories.forEach(cat -> categoryFreq.put(cat, categoryFreq.getOrDefault(cat, 0.0) + rankWeight));
 		}
 		return new UserTaste(specificFreq, categoryFreq);
 	}
 
 	// 유저 선호 가수/장르와 일치하는 공연 검색
 	private List<Concert> searchConcerts(List<Long> preferredIds, Map<String, Double> categoryFreq) {
-		List<String> searchPatterns = categoryFreq.entrySet().stream()
-				.sorted(Map.Entry.<String, Double>comparingByValue().reversed())
-				.limit(5)
-				.map(e -> e.getKey() + "/%")
-				.toList();
+		List<String> searchPatterns = categoryFreq.entrySet()
+			.stream()
+			.sorted(Map.Entry.<String, Double>comparingByValue().reversed())
+			.limit(5)
+			.map(e -> e.getKey() + "/%")
+			.toList();
 
-		return concertRepository.findRecommendedByCategories(
-				preferredIds.toArray(new Long[0]),
-				searchPatterns.toArray(new String[0])
-		);
+		return concertRepository.findRecommendedByCategories(preferredIds.toArray(new Long[0]),
+				searchPatterns.toArray(new String[0]));
 	}
 
 	// 공연 리스트를 DTO 리스트로 변환
-	private List<RecommendResponseDto.ConcertDto> convertToConcertDtos(
-			List<Concert> concerts, List<Long> preferredIds, UserTaste taste) {
+	private List<RecommendResponseDto.ConcertDto> convertToConcertDtos(List<Concert> concerts, List<Long> preferredIds,
+			UserTaste taste) {
 
 		// 출연진 캐싱
 		Map<Long, Artist> artistMap = getAllArtistMapInConcerts(concerts);
 
 		return concerts.stream().map(c -> {
-					List<Artist> casts = c.getCasts().stream()
-							.map(artistMap::get).filter(Objects::nonNull).toList();
+			List<Artist> casts = c.getCasts().stream().map(artistMap::get).filter(Objects::nonNull).toList();
 
-					Set<String> cSpecs = new HashSet<>();
-					Set<String> cCats = new HashSet<>();
-					extractGenres(casts, cSpecs, cCats);
+			Set<String> cSpecs = new HashSet<>();
+			Set<String> cCats = new HashSet<>();
+			extractGenres(casts, cSpecs, cCats);
 
-					int matchingRate = calculateMatchingRate(cSpecs, cCats, taste, preferredIds, c);
+			int matchingRate = calculateMatchingRate(cSpecs, cCats, taste, preferredIds, c);
 
-					return RecommendResponseDto.ConcertDto.builder()
-							.concertName(c.getConcertName())
-							.casts(casts.stream().map(Artist::getArtistName).toList())
-							.genres(cSpecs.stream().map(s -> s.split("/")[1]).toList())
-							.matchingRate(matchingRate)
-							.posterImgUrl(c.getPosterImgUrl())
-							.bookingUrl(c.getBookingUrl())
-							.build();
-				})
-				.sorted(Comparator.comparingInt(RecommendResponseDto.ConcertDto::getMatchingRate).reversed())
-				.toList();
+			return RecommendResponseDto.ConcertDto.builder()
+				.concertName(c.getConcertName())
+				.casts(casts.stream().map(Artist::getArtistName).toList())
+				.genres(cSpecs.stream().map(s -> s.split("/")[1]).toList())
+				.matchingRate(matchingRate)
+				.posterImgUrl(c.getPosterImgUrl())
+				.bookingUrl(c.getBookingUrl())
+				.build();
+		}).sorted(Comparator.comparingInt(RecommendResponseDto.ConcertDto::getMatchingRate).reversed()).toList();
 	}
 
 	// 각 가수로부터 장르 추출
@@ -172,51 +171,57 @@ public class RecommendationService {
 
 	// 선호 가수 추출
 	private Map<Long, Artist> getPreferredArtistMap(List<Long> ids) {
-		return artistRepository.findAllById(ids).stream()
-				.collect(Collectors.toMap(Artist::getArtistId, Function.identity()));
+		return artistRepository.findAllById(ids)
+			.stream()
+			.collect(Collectors.toMap(Artist::getArtistId, Function.identity()));
 	}
 
 	// 공연의 출연 가수 추출
 	private Map<Long, Artist> getAllArtistMapInConcerts(List<Concert> concerts) {
 		Set<Long> allCastIds = concerts.stream().flatMap(c -> c.getCasts().stream()).collect(Collectors.toSet());
-		return artistRepository.findAllById(allCastIds).stream()
-				.collect(Collectors.toMap(Artist::getArtistId, Function.identity()));
+		return artistRepository.findAllById(allCastIds)
+			.stream()
+			.collect(Collectors.toMap(Artist::getArtistId, Function.identity()));
 	}
 
 	// 빈 DTO 반환
 	private RecommendResponseDto emptyRecommendResponse() {
 		return RecommendResponseDto.builder()
-				.topArtists(List.of()).topGenres(List.of()).recommendedConcerts(List.of())
-				.build();
+			.topArtists(List.of())
+			.topGenres(List.of())
+			.recommendedConcerts(List.of())
+			.build();
 	}
 
 	// 매칭률 계산
-	private int calculateMatchingRate(Set<String> cSpecs, Set<String> cCats,
-									  UserTaste usertaste, List<Long> preferredIds, Concert c) {
+	private int calculateMatchingRate(Set<String> cSpecs, Set<String> cCats, UserTaste usertaste,
+			List<Long> preferredIds, Concert c) {
 		List<Double> genreMatchScores = new ArrayList<>();
 
 		for (String s : cSpecs) {
 			double score = usertaste.specificFreq.getOrDefault(s, 0.0) * 0.5; // 소분류 가중치
-			if (score > 0) genreMatchScores.add(score);
+			if (score > 0)
+				genreMatchScores.add(score);
 		}
 		for (String cat : cCats) {
 			double score = usertaste.categoryFreq.getOrDefault(cat, 0.0) * 0.1; // 중분류 가중치
-			if (score > 0) genreMatchScores.add(score);
+			if (score > 0)
+				genreMatchScores.add(score);
 		}
 
 		// 점수가 높은 장르 3개만 합산
 		double topMatchWeight = genreMatchScores.stream()
-				.sorted(Comparator.reverseOrder())
-				.limit(3)
-				.mapToDouble(Double::doubleValue)
-				.sum();
+			.sorted(Comparator.reverseOrder())
+			.limit(3)
+			.mapToDouble(Double::doubleValue)
+			.sum();
 
 		double genreScore = Math.min(1.0, topMatchWeight / 400.0);
 
 		boolean isFavorite = c.getCasts().stream().anyMatch(preferredIds::contains);
 		int matchingRate;
 
-		if(isFavorite)
+		if (isFavorite)
 			matchingRate = (int) Math.round(90 + (genreScore * 10)); // 선호 아티스트가 있는 경우
 		else
 			matchingRate = (int) Math.round(40 + (genreScore * 55)); // 선호 아티스트가 없는 경우
@@ -227,21 +232,20 @@ public class RecommendationService {
 	// 선호하는 아티스트 5명 반환
 	private List<RecommendResponseDto.ArtistDto> preferredArtistsByOrder(List<Long> ids, Map<Long, Artist> map) {
 		return ids.stream()
-				.filter(map::containsKey)
-				.limit(5)
-				.map(id -> RecommendResponseDto.ArtistDto.builder().name(map.get(id).getArtistName()).build())
-				.toList();
+			.filter(map::containsKey)
+			.limit(5)
+			.map(id -> RecommendResponseDto.ArtistDto.builder().name(map.get(id).getArtistName()).build())
+			.toList();
 	}
 
 	// 선호하는 장르 5개 반환
 	private List<RecommendResponseDto.GenreDto> getTopGenres(Map<String, Double> freq) {
-		return freq.entrySet().stream()
-				.sorted(Map.Entry.<String, Double>comparingByValue().reversed())
-				.limit(5)
-				.map(e -> RecommendResponseDto.GenreDto.builder()
-						.name(e.getKey().split("/")[1])
-						.build())
-				.toList();
+		return freq.entrySet()
+			.stream()
+			.sorted(Map.Entry.<String, Double>comparingByValue().reversed())
+			.limit(5)
+			.map(e -> RecommendResponseDto.GenreDto.builder().name(e.getKey().split("/")[1]).build())
+			.toList();
 	}
 
 	@Transactional
@@ -253,7 +257,8 @@ public class RecommendationService {
 
 			// 2. Spotify 데이터 가져오기
 			List<ArtistItemDto> spotifyItems = getTopArtists(accessToken);
-			if (spotifyItems == null || spotifyItems.isEmpty()) return;
+			if (spotifyItems == null || spotifyItems.isEmpty())
+				return;
 
 			// AI 분류가 필요한 ID들만 담을 리스트 생성
 			List<Long> needsAiClassification = new ArrayList<>();
@@ -269,9 +274,11 @@ public class RecommendationService {
 			// 5. 유저 최종 선호도 정보 업데이트
 			saveUserPreference(user, artistPrimaryIds);
 
-		} catch (HttpClientErrorException.Unauthorized e) {
+		}
+		catch (HttpClientErrorException.Unauthorized e) {
 			throw new BusinessException(ErrorCode.SESSION_EXPIRED);
-		} catch (Exception e) {
+		}
+		catch (Exception e) {
 			throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "데이터 동기화 중 오류가 발생했습니다.");
 		}
 	}
@@ -279,8 +286,7 @@ public class RecommendationService {
 	// 유저 정보 조회
 	private User getUserByToken(String token) {
 		Long userId = jwtTokenProvider.parseClaimsAllowExpired(token).get("uid", Long.class);
-		return userRepository.findById(userId)
-				.orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+		return userRepository.findById(userId).orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 	}
 
 	// AccessToken 재발급
@@ -348,16 +354,15 @@ public class RecommendationService {
 		List<Long> allArtistPrimaryIds = new ArrayList<>();
 
 		for (ArtistItemDto item : items) {
-			Artist artist = artistRepository.findBySpotifyArtistId(item.getId())
-					.map(existing -> {
-						existing.setArtistName(item.getName());
-						return existing;
-					})
-					.orElseGet(() -> artistRepository.save(Artist.builder()
-							.spotifyArtistId(item.getId())
-							.artistName(item.getName())
-							.genres(item.getGenres()) // 초기에는 Spotify 장르 저장
-							.build()));
+			Artist artist = artistRepository.findBySpotifyArtistId(item.getId()).map(existing -> {
+				existing.setArtistName(item.getName());
+				return existing;
+			})
+				.orElseGet(() -> artistRepository.save(Artist.builder()
+					.spotifyArtistId(item.getId())
+					.artistName(item.getName())
+					.genres(item.getGenres()) // 초기에는 Spotify 장르 저장
+					.build()));
 
 			allArtistPrimaryIds.add(artist.getArtistId());
 
@@ -374,7 +379,8 @@ public class RecommendationService {
 		List<String> currentGenres = artist.getGenres();
 
 		// 1. 장르 데이터가 아예 없는 경우
-		if (currentGenres == null || currentGenres.isEmpty()) return true;
+		if (currentGenres == null || currentGenres.isEmpty())
+			return true;
 
 		// 2. 장르에 우리가 정의한 구분자("/")가 하나도 없는 경우 (Spotify 원시 데이터인 상태)
 		return currentGenres.stream().noneMatch(g -> g.contains("/"));
@@ -383,10 +389,8 @@ public class RecommendationService {
 	// 유저 선호도 저장
 	private void saveUserPreference(User user, List<Long> artistIds) {
 		UserPreference preference = userPreferenceRepository.findById(user.getUid())
-				.orElseGet(() -> userPreferenceRepository.save(UserPreference.builder()
-						.user(user)
-						.artistIds(new ArrayList<>())
-						.build()));
+			.orElseGet(() -> userPreferenceRepository
+				.save(UserPreference.builder().user(user).artistIds(new ArrayList<>()).build()));
 
 		preference.setArtistIds(artistIds);
 		preference.setUpdatedAt(OffsetDateTime.now());
