@@ -79,6 +79,7 @@ CREATE TABLE IF NOT EXISTS concerts (
   performance_start_date DATE,
   performance_end_date DATE,
 
+  concert_location TEXT,
   booking_url TEXT,
   poster_img_url TEXT,
 

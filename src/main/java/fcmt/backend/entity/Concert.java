@@ -40,6 +40,9 @@ public class Concert {
 	@Column(name = "performance_end_date")
 	private LocalDate performanceEndDate;
 
+	@Column(name = "concert_location")
+	private String concertLocation;
+
 	@Column(name = "booking_url")
 	private String bookingUrl;
 
