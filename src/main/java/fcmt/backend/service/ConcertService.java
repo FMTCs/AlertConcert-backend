@@ -72,7 +72,7 @@ public class ConcertService {
 		String eddate = oneYearLater.format(formatter);
 
 		// 1. 대상 장르 코드 리스트 정의 (CCCD: 대중음악 -> CCCA: 서양음악(클래식))
-		List<String> genreCodes = List.of("CCCD", "CCCA");
+		List<String> genreCodes = List.of("CCCD");
 
 		log.info("수집 기간: {} ~ {}", stdate, eddate);
 
@@ -97,7 +97,7 @@ public class ConcertService {
 
 				if (listResponse != null && listResponse.getConcertList() != null) {
 					for (KopisListResponse.KopisListDto listDto : listResponse.getConcertList()) {
-						if (processedDetails >= 10) { // TODO: need to remove
+						if (processedDetails >= 500) { // TODO: need to remove
 							break outer;
 						}
 						try {
