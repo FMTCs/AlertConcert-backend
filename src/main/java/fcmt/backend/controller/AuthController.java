@@ -2,7 +2,7 @@ package fcmt.backend.controller;
 
 import fcmt.backend.dto.*;
 import fcmt.backend.service.AuthService;
-import org.springframework.http.ResponseEntity;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -17,9 +17,8 @@ public class AuthController {
 
 	// [TODO] ResponseDto 관련 통일 및 처리 필요
 	@PostMapping("/register")
-	public ResponseEntity<?> register(@RequestBody RegisterRequestDto request) {
-		authService.register(request);
-		return ResponseEntity.ok("Register Success!"); // [TODO] Dto 관련 통합 이후 삭제
+	public RegisterResponseDto register(@Valid @RequestBody RegisterRequestDto request) {
+		return authService.register(request);
 	}
 
 	@PostMapping("/login")

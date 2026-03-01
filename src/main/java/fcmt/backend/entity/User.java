@@ -1,6 +1,7 @@
 // User DB 부분 구현 필요
 package fcmt.backend.entity;
 
+import fcmt.backend.util.TokenEncryptionConverter;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
@@ -43,9 +44,7 @@ public class User {
 	@Column(nullable = false)
 	private boolean valid = false;
 
-	/**
-	 * 대칭키로 암호화된 Spotify refresh token
-	 */
+	@Convert(converter = TokenEncryptionConverter.class)
 	@Column(name = "spotify_refresh_token_enc", columnDefinition = "TEXT")
 	private String spotifyRefreshTokenEnc;
 
