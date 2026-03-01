@@ -1,0 +1,58 @@
+@server = http://localhost:8080
+@json = application/json
+@accessToken = eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJoNHZydXQ0IiwidWlkIjoxLCJ0eXBlIjoiQUNDRVNTIiwiaWF0IjoxNzcwODkzMTA2LCJleHAiOjE3NzA4OTQwMDZ9.PV4DfTTbr5I820Jk5Bg7lg7Dc6XOHLhssUimYxMP-C8
+@refreshToken = eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ0ZXN0dXNlcjIiLCJ1aWQiOjYsInR5cGUiOiJSRUZSRVNIIiwiaWF0IjoxNzY4MjMyNzI1LCJleHAiOjE3Njk0NDIzMjV9.rTokMpr0y0WbdbJ2K4TKJl89Gemmy6ECYh8b8vbUn58
+
+########################################
+### 1️⃣ 회원가입 (permitAll)
+########################################
+POST {{server}}/auth/register
+Content-Type: {{json}}
+
+{
+  "username": "a",
+  "password": "a",
+  "signupToken": "valid"
+}
+
+########################################
+### 2️⃣ 로그인 (permitAll)
+### → accessToken 반환
+########################################
+POST {{server}}/auth/login
+Content-Type: {{json}}
+
+{
+  "username": "h4vrut4",
+  "password": "H$VRUT$"
+}
+
+########################################
+### 3️⃣ KOPIS 데이터 수집 실행 (Access Token 포함)
+########################################
+GET {{server}}/api/test/run-kopis
+Authorization: Bearer {{accessToken}}
+
+########################################
+### 4️⃣ AI 기능 테스트 (Access Token 포함)
+### → 출연진 리스트 추출 및 첫 번째 가수의 Spotify ID 조회
+########################################
+GET {{server}}/api/test/ai-test?concertName=현대카드+Super+Match+임영웅
+Authorization: Bearer {{accessToken}}
+
+### 다른 공연 예시 (아이브)
+GET {{server}}/api/test/ai-test?concertName=IVE+THE+1ST+WORLD+TOUR+SHOW+WHAT+I+HAVE
+Authorization: Bearer {{accessToken}}
+
+### 다른 공연 예시
+GET {{server}}/api/test/ai-test?concertName=ANTARES+PHASE+:+RED
+Authorization: Bearer {{accessToken}}
+
+########################################
+### 5️⃣ KOPIS + AI 파이프라인 테스트
+### → KOPIS 동기화(변경/신규 콘서트 ID 수집) 후
+###   해당 콘서트들 대상으로 AI 출연진 추출 + Spotify ID 조회까지 수행
+### 현재 코드상으로 10개의 공연만 긁어오도록 설정되어있음. ConcertService.java > processedDetails 변수 설정으로 횟수 변경 가능
+########################################
+GET {{server}}/api/test/run-kopis-and-ai-test
+Authorization: Bearer {{accessToken}}
