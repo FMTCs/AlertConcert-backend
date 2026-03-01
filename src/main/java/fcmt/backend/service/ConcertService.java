@@ -72,7 +72,7 @@ public class ConcertService {
 		String eddate = oneYearLater.format(formatter);
 
 		// 1. 대상 장르 코드 리스트 정의 (CCCD: 대중음악 -> CCCA: 서양음악(클래식))
-		List<String> genreCodes = List.of("CCCD", "CCCA");
+		List<String> genreCodes = List.of("CCCD");
 
 		log.info("수집 기간: {} ~ {}", stdate, eddate);
 
@@ -207,7 +207,7 @@ public class ConcertService {
 	// 2. AI + Spotify로 출연진 정보 "추출"
 	//
 	// TODO: public -> private으로 다시 수정해야함(테스트를 위해 public으로 변경해둠)
-	public static record ConcertArtistExtractResult(Long concertId, String concertName, List<String> artistNames,
+	public record ConcertArtistExtractResult(Long concertId, String concertName, List<String> artistNames,
 			List<AiClient.ArtistIdRecord> spotifyDetails) {
 		public ConcertArtistExtractResult {
 			artistNames = (artistNames == null) ? List.of() : List.copyOf(artistNames);
